@@ -128,7 +128,7 @@ ignore_args = [
 async def normal_launch_async(playwright: Playwright,trace_dir=None):
     browser = await playwright.chromium.launch(
         traces_dir=None,
-        headless=False,
+        headless=True,
         args=[
             "--disable-blink-features=AutomationControlled",
         ],
@@ -445,8 +445,8 @@ async def get_element_data(element, tag_name):
 
 async def get_interactive_elements_with_playwright(page):
     interactive_elements_selectors = [
-        'a', 'button',
-        'input',
+        'a', 'button', 'div.footWrap--LePfCZWd > div > div.LeftButtonListForEmphasize--eCGPFYh5 > div:nth-child(2)', '#submitOrder',
+        'input', 'button:text("Add to cart")',
         'select', 'textarea', 'adc-tab', '[role="button"]', '[role="radio"]', '[role="option"]', '[role="combobox"]',
         '[role="textbox"]',
         '[role="listbox"]', '[role="menu"]',

@@ -154,6 +154,8 @@ ELEMENT TEXT: Please provide the exact text displayed on the element. Do not inv
 
 seeact_online_sys_prompt = '''Imagine that you are imitating humans doing web navigation for a task step by step. At each stage, you can see the webpage like humans by a screenshot and know the previous actions before the current step decided by yourself through recorded history. You need to decide on the first following action to take. You can click on an element with the mouse, select an option, type text or press Enter with the keyboard. (For your understanding, they are like the click(), select_option() type() and keyboard.press('Enter') functions in playwright respectively) One next step means one operation within the four. Unlike humans, for typing (e.g., in text areas, text boxes) and selecting (e.g., from dropdown menus or <select> elements), you should try directly typing the input or selecting the choice, bypassing the need for an initial click. You should not attempt to create accounts, log in or do the final submission. Terminate when you deem the task complete or if it requires potentially harmful actions.'''
 
+seeact_online_sys_prompt_no_ban_actions = '''Imagine that you are imitating humans doing web navigation for a task step by step. At each stage, you can see the webpage like humans by a screenshot and know the previous actions before the current step decided by yourself through recorded history. You need to decide on the first following action to take. You can click on an element with the mouse, select an option, type text or press Enter with the keyboard. (For your understanding, they are like the click(), select_option() type() and keyboard.press('Enter') functions in playwright respectively) One next step means one operation within the four. Unlike humans, for typing (e.g., in text areas, text boxes) and selecting (e.g., from dropdown menus or <select> elements), you should try directly typing the input or selecting the choice, bypassing the need for an initial click. '''
+
 seeact_online_question_description_new_exp4 = '''The screenshot below shows the webpage you see. Follow the following guidance to think step by step before outlining the next action step at the current stage:
 
 (Current Webpage Identification)
@@ -180,11 +182,13 @@ seeact_online_value_format = "VALUE: Provide additional input based on ACTION.\n
                "write \"None\"."
 
 seeact_choice_prompt_dict = {
-    "system_prompt": seeact_online_sys_prompt,
+    # "system_prompt": seeact_online_sys_prompt,  # prompt0
 
-    "question_description": seeact_online_question_description_new_exp4,
+    "system_prompt": seeact_online_sys_prompt_no_ban_actions,  # prompt0 modify
 
-    "referring_description": f"""(Reiteration)
+    "question_description": seeact_online_question_description_new_exp4, # question_description_new_exp4+ "You are asked to complete..." + "Previous Actions: "= prompt1
+
+    "referring_description": f"""(Reiteration) 
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Multichoice Question)
@@ -200,7 +204,7 @@ ELEMENT: The uppercase letter of your choice. (No need for PRESS ENTER)""",
     "action_format": f"{seeact_online_action_format}",
 
     "value_format": f"{seeact_online_value_format}"
-}
+} # referring_description  + 'If none of these elements match your target element, please select S. None of the other options match the correct element.' + choices + element_format + action_format + value_format = prompt2
 
 
 

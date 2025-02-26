@@ -27,6 +27,7 @@ import os
 import warnings
 from dataclasses import dataclass
 
+import openai
 import toml
 import torch
 from aioconsole import ainput, aprint
@@ -40,7 +41,9 @@ from demo_utils.format_prompt import format_choices, format_ranking_input, postp
 from demo_utils.inference_engine import OpenaiEngine
 from demo_utils.ranking_model import CrossEncoder, find_topk
 from demo_utils.website_dict import website_dict
+from dotenv import load_dotenv
 
+load_dotenv()
 # Remove Huggingface internal warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -159,6 +162,7 @@ async def main(config, base_dir) -> None:
 
     # openai settings
     openai_config = config["openai"]
+    openai_config["api_key"] = os.getenv("OPENAI_API_KEY", "Your API Key Here")
     if openai_config["api_key"] == "Your API Key Here":
         raise Exception(
             f"Please set your GPT API key first. (in {os.path.join(base_dir, 'config', 'demo_mode.toml')} by default)")
@@ -261,6 +265,12 @@ async def main(config, base_dir) -> None:
                                                                      geolocation=geolocation,
                                                                      locale=locale)
             session_control.context.on("page", page_on_open_handler)
+            
+            # bypass login
+            with open('./cookies/taobao.json', 'r') as f:
+                cookies = json.load(f)
+                await session_control.context.add_cookies(cookies) # modify
+
             await session_control.context.new_page()
             try:
                 await session_control.active_page.goto(confirmed_website_url, wait_until="load")
@@ -412,7 +422,7 @@ async def main(config, base_dir) -> None:
                 query_count = 0
                 got_one_answer = False
 
-                for multichoice_i in range(0, num_choices, step_length):
+                for multichoice_i in range(0, num_choices, step_length): ### 分批次读取元素，num_choices是所有的元素，step_length为每批次的batchsize
                     logger.info("-" * 10)
                     logger.info(f"Start Multi-Choice QA - Batch {multichoice_i // step_length}")
                     input_image_path = os.path.join(main_result_path, 'image_inputs',
@@ -455,7 +465,7 @@ async def main(config, base_dir) -> None:
                     query_count += 1
                     # Format prompts for LLM inference
                     prompt = generate_prompt(task=confirmed_task, previous=taken_actions, choices=choices,
-                                             experiment_split="SeeAct")
+                                           experiment_split="SeeAct")  # 提示LLM做任务的prompt
                     if dev_mode:
                         for prompt_i in prompt:
                             logger.info(prompt_i)
