@@ -62,30 +62,23 @@ class SessionControl:
 session_control = SessionControl()
 
 
-#
-# async def init_cdp_session(page):
-#     cdp_session = await page.context.new_cdp_session(page)
-#     await cdp_session.send("DOM.enable")
-#     await cdp_session.send("Overlay.enable")
-#     await cdp_session.send("Accessibility.enable")
-#     await cdp_session.send("Page.enable")
-#     await cdp_session.send("Emulation.setFocusEmulationEnabled", {"enabled": True})
-#     return cdp_session
+
+async def init_cdp_session(page):
+    cdp_session = await page.context.new_cdp_session(page)
+    await cdp_session.send("DOM.enable")
+    await cdp_session.send("Overlay.enable")
+    await cdp_session.send("Accessibility.enable")
+    await cdp_session.send("Page.enable")
+    await cdp_session.send("Emulation.setFocusEmulationEnabled", {"enabled": True})
+    return cdp_session
 
 
 async def page_on_close_handler(page):
-    # print("Closed: ", page)
     if session_control.context:
-        # if True:
         try:
             await session_control.active_page.title()
-            # print("Current active page: ", session_control.active_page)
         except:
             await aprint("The active tab was closed. Will switch to the last page (or open a new default google page)")
-            # print("All pages:")
-            # print('-' * 10)
-            # print(session_control.context.pages)
-            # print('-' * 10)
             if session_control.context.pages:
                 session_control.active_page = session_control.context.pages[-1]
                 await session_control.active_page.bring_to_front()
@@ -101,8 +94,6 @@ async def page_on_close_handler(page):
 
 async def page_on_navigatio_handler(frame):
     session_control.active_page = frame.page
-    # print("Page navigated to:", frame.url)
-    # print("The active tab is set to: ", frame.page.url)
 
 
 async def page_on_crash_handler(page):
@@ -112,18 +103,10 @@ async def page_on_crash_handler(page):
 
 
 async def page_on_open_handler(page):
-    # print("Opened: ",page)
     page.on("framenavigated", page_on_navigatio_handler)
     page.on("close", page_on_close_handler)
     page.on("crash", page_on_crash_handler)
     session_control.active_page = page
-    # print("The active tab is set to: ", page.url)
-    # print("All pages:")
-    # print('-'*10)
-    # print(session_control.context.pages)
-    # print("active page: ",session_control.active_page)
-    # print('-' * 10)
-
 
 async def main(config, base_dir) -> None:
     # basic settings
@@ -242,8 +225,8 @@ async def main(config, base_dir) -> None:
         log_fh.setLevel(logging.INFO)
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
-        log_format = logging.Formatter('%(asctime)s - %(message)s')
-        terminal_format = logging.Formatter('%(message)s')
+        log_format = logging.Formatter('%(asctime)s - %(filename)s:%(lineno)d - %(message)s')
+        terminal_format = logging.Formatter('%(filename)s:%(lineno)d - %(message)s')
         log_fh.setFormatter(log_format)
         console_handler.setFormatter(terminal_format)
         logger.addHandler(log_fh)
@@ -277,7 +260,7 @@ async def main(config, base_dir) -> None:
             except Exception as e:
                 logger.info("Failed to fully load the webpage before timeout")
                 logger.info(e)
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
 
             taken_actions = []
             complete_flag = False
@@ -422,13 +405,13 @@ async def main(config, base_dir) -> None:
                 query_count = 0
                 got_one_answer = False
 
-                for multichoice_i in range(0, num_choices, step_length): ### 分批次读取元素，num_choices是所有的元素，step_length为每批次的batchsize
+                for multichoice_i in range(0, num_choices, step_length): # Read elements in batches, num_choices is all the elements, step_length is the batch size for each batch
                     logger.info("-" * 10)
                     logger.info(f"Start Multi-Choice QA - Batch {multichoice_i // step_length}")
                     input_image_path = os.path.join(main_result_path, 'image_inputs',
                                                     f'{time_step}_{multichoice_i // step_length}_crop.jpg')
 
-                    height_start = all_candidate_ids_with_location[multichoice_i][1]
+                    height_start = all_candidate_ids_with_location[multichoice_i][1] # (element_id, ele_loc_x, ele_loc_y)
                     height_end = all_candidate_ids_with_location[min(multichoice_i + step_length, num_choices) - 1][1]
 
                     total_height = await session_control.active_page.evaluate('''() => {
@@ -563,35 +546,31 @@ async def main(config, base_dir) -> None:
                     target_element = []
 
                 try:
+                    # Check exit conditions
                     if monitor_signal == 'exit':
-                        raise Exception("human supervisor manually made it exit.")
+                        raise Exception("Human supervisor manually made it exit.")
                     if no_op_count >= max_continuous_no_op:
-                        raise Exception(f"no executable operations for {max_continuous_no_op} times.")
+                        raise Exception(f"No executable operations for {max_continuous_no_op} times.")
                     elif time_step >= max_op:
-                        raise Exception(f"the agent reached the step limit {max_op}.")
+                        raise Exception(f"The agent reached the step limit {max_op}.")
                     elif target_action == "TERMINATE":
                         raise Exception("The model determined a completion.")
 
-                    # Perform browser action with PlayWright
-                    # The code is complex to handle all kinds of cases in execution
-                    # It's ugly, but it works, so far
+                    # Perform browser operations
                     selector = None
                     fail_to_execute = False
                     try:
-                        if target_element == []:
-                            pass
-                        else:
-                            if not target_element in ["PRESS ENTER", "TERMINATE"]:
-                                selector = target_element[-2]
-                                if dev_mode:
-                                    logger.info(target_element)
-                                try:
-                                    await selector.scroll_into_view_if_needed(timeout=3000)
-                                    if highlight:
-                                        await selector.highlight()
-                                        await asyncio.sleep(2.5)
-                                except Exception as e:
-                                    pass
+                        if target_element and target_element not in ["PRESS ENTER", "TERMINATE"]:
+                            selector = target_element[-2]
+                            if dev_mode:
+                                logger.info(target_element)
+                            try:
+                                await selector.scroll_into_view_if_needed(timeout=3000)
+                                if highlight:
+                                    await selector.highlight()
+                                    await asyncio.sleep(2.5)
+                            except Exception:
+                                pass
 
                         if selector:
                             valid_op_count += 1
@@ -773,89 +752,77 @@ async def main(config, base_dir) -> None:
                                     await selector.click(timeout=10000)
                                     await session_control.active_page.keyboard.press('Enter')
                         elif monitor_signal == "pause":
-                            logger.info(
-                                "Pause for human intervention. Press Enter to continue. You can also enter your message here, which will be included in the action history as a human message.")
+                            logger.info("Pause for human intervention. Press Enter to continue. You can also enter your message here, which will be included in the action history as a human message.")
                             human_intervention = await ainput()
                             if human_intervention:
                                 human_intervention = f" Human message: {human_intervention}"
-                            raise Exception(
-                                f"the human supervisor rejected this operation and may have taken some actions.{human_intervention}")
+                            raise Exception(f"The human supervisor rejected this operation and may have taken some actions.{human_intervention}")
                         elif monitor_signal == "reject":
-                            raise Exception("the human supervisor rejected this operation.")
+                            raise Exception("The human supervisor rejected this operation.")
                         elif target_element == "PRESS ENTER":
                             logger.info("Try performing a PRESS ENTER")
                             await session_control.active_page.keyboard.press('Enter')
                         no_op_count = 0
-                        try:
-                            await session_control.active_page.wait_for_load_state('load')
-                        except Exception as e:
-                            pass
+                        await session_control.active_page.wait_for_load_state('load')
                     except Exception as e:
-                        if target_action not in ["TYPE", "SELECT"]:
-                            new_action = f"Failed to {target_action} {target_element_text} because {e}"
-
-                        else:
-                            new_action = f"Failed to {target_action} {target_value} for {target_element_text} because {e}"
+                        new_action = f"Failed to {target_action} {target_element_text if target_action not in ['TYPE', 'SELECT'] else target_value} because {e}"
                         fail_to_execute = True
 
                     if new_action == "" or fail_to_execute:
-                        if new_action == "":
-                            new_action = "No Operation"
+                        new_action = "No Operation" if new_action == "" else new_action
                         if monitor_signal not in ["pause", "reject"]:
                             no_op_count += 1
                     taken_actions.append(new_action)
+
                     if not session_control.context.pages:
                         await session_control.context.new_page()
                         try:
                             await session_control.active_page.goto(confirmed_website_url, wait_until="load")
-                        except Exception as e:
+                        except Exception:
                             pass
 
-                    if monitor_signal == 'pause':
-                        pass
-                    else:
+                    if monitor_signal != 'pause':
                         await asyncio.sleep(3)
-                    if dev_mode:
-                        logger.info(f"current active page: {session_control.active_page}")
 
-                        # await session_control.context.new_page()
-                        # try:
-                        #     await session_control.active_page.goto("https://www.bilibili.com/", wait_until="load")
-                        # except Exception as e:
-                        #     pass
+                    if dev_mode:
+                        logger.info(f"Current active page: {session_control.active_page}")
                         logger.info("All pages")
                         logger.info(session_control.context.pages)
                         logger.info("-" * 10)
+
                     try:
                         await session_control.active_page.wait_for_load_state('load')
                     except Exception as e:
                         if dev_mode:
                             logger.info(e)
+
                     if tracing:
                         logger.info("Save playwright trace file")
-                        await session_control.context.tracing.stop_chunk(
-                            path=f"{os.path.join(main_result_path, 'playwright_traces', f'{time_step}.zip')}")
+                        await session_control.context.tracing.stop_chunk(path=f"{os.path.join(main_result_path, 'playwright_traces', f'{time_step}.zip')}")
+
                 except Exception as e:
                     logger.info("=" * 10)
                     logger.info(f"Decide to terminate because {e}")
                     logger.info("Action History:")
-
                     for action in taken_actions:
                         logger.info(action)
                     logger.info("")
 
                     if tracing:
                         logger.info("Save playwright trace file")
-                        await session_control.context.tracing.stop_chunk(
-                            path=f"{os.path.join(main_result_path, 'playwright_traces', f'{time_step}.zip')}")
+                        await session_control.context.tracing.stop_chunk(path=f"{os.path.join(main_result_path, 'playwright_traces', f'{time_step}.zip')}")
 
-                    success_or_not = ""
-                    if valid_op_count == 0:
-                        success_or_not = "0"
+                    success_or_not = "0" if valid_op_count == 0 else ""
                     logger.info(f"Write results to json file: {os.path.join(main_result_path, 'result.json')}")
-                    final_json = {"confirmed_task": confirmed_task, "website": confirmed_website,
-                                  "task_id": task_id, "success_or_not": success_or_not,
-                                  "num_step": len(taken_actions), "action_history": taken_actions, "exit_by": str(e)}
+                    final_json = {
+                        "confirmed_task": confirmed_task,
+                        "website": confirmed_website,
+                        "task_id": task_id,
+                        "success_or_not": success_or_not,
+                        "num_step": len(taken_actions),
+                        "action_history": taken_actions,
+                        "exit_by": str(e)
+                    }
 
                     with open(os.path.join(main_result_path, 'result.json'), 'w', encoding='utf-8') as file:
                         json.dump(final_json, file, indent=4)
@@ -876,7 +843,6 @@ async def main(config, base_dir) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
     parser.add_argument("-c", "--config_path", help="Path to the TOML configuration file.", type=str, metavar='config',
                         default=f"{os.path.join('config', 'demo_mode.toml')}")
     args = parser.parse_args()
