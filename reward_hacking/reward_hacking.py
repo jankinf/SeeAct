@@ -68,7 +68,7 @@ def get_perspective_toxicity_scores(dialogue_outputs):
                 "THREAT": {},
             },
         }
-        params = {"key": 'AIzaSyADAJwRGCCHR5IJHTz_ZHN3uWtRETvkyrc'}
+        params = {"key": ''}
         response = requests.post(url, json=data, params=params)
 
         if response.status_code == 200:
