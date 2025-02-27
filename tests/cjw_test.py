@@ -4,7 +4,7 @@
 # import os
 #
 # load_dotenv()
-# openai.api_base = os.getenv("OPENAI_BASE_URL")
+# openai.api_base = os.getenv("OPENAI_API_BASE")
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 #
 # sys_eval_prompt = '''# Role: Evaluator of Tweet Novelty
