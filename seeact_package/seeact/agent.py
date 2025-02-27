@@ -68,34 +68,26 @@ class SeeActAgent:
                  ):
 
         try:
-            if config_path is not None:
-                with open(config_path,
-                          'r') as config:
-                    print(f"Configuration File Loaded - {config_path}")
-                    config = toml.load(config)
-            else:
-                config = {
-                    "basic": {
-                        "save_file_dir": save_file_dir,
-                        "default_task": default_task,
-                        "default_website": default_website,
-                        "crawler_mode": crawler_mode,
-                        "crawler_max_steps": crawler_max_steps,
-                    },
-                    "agent": {
-                        "input_info": input_info,
-                        "grounding_strategy": grounding_strategy,
-                        "max_auto_op": max_auto_op,
-                        "max_continuous_no_op": max_continuous_no_op,
-                        "highlight": highlight
-                    },
-                    "openai": {
-                        "rate_limit": rate_limit,
-                        "model": model,
-                        "temperature": temperature
-                    }
-                }
-            config.update({
+            config = {
+                "basic": {
+                    "save_file_dir": save_file_dir,
+                    "default_task": default_task,
+                    "default_website": default_website,
+                    "crawler_mode": crawler_mode,
+                    "crawler_max_steps": crawler_max_steps,
+                },
+                "agent": {
+                    "input_info": input_info,
+                    "grounding_strategy": grounding_strategy,
+                    "max_auto_op": max_auto_op,
+                    "max_continuous_no_op": max_continuous_no_op,
+                    "highlight": highlight
+                },
+                "openai": {
+                    "rate_limit": rate_limit,
+                    "model": model,
+                    "temperature": temperature
+                },
                 "browser": {
                     "headless": headless,
                     "args": args,
@@ -107,7 +99,21 @@ class SeeActAgent:
                     "tracing": tracing,
                     "trace": trace
                 }
-            })
+            }
+            if config_path is not None:
+                with open(config_path,
+                          'r') as fp:
+                    print(f"Configuration File Loaded - {config_path}")
+                    toml_config = toml.load(fp)
+            
+            def deep_update(target, update):
+                for key, value in update.items():
+                    if isinstance(value, dict) and key in target and isinstance(target[key], dict):
+                        deep_update(target[key], value)
+                    else:
+                        target[key] = value
+
+            deep_update(config, toml_config)
 
         except FileNotFoundError:
             print(f"Error: File '{os.path.abspath(config_path)}' not found.")
