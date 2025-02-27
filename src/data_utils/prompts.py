@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .format_prompt_utils import data_format_input_multichoice, \
-    format_options, generate_option_name, generate_new_referring_prompt, generate_new_query_prompt
+from .format_prompt_utils import generate_new_referring_prompt, generate_new_query_prompt
 
 sys_prompt = '''Imagine that you are imitating humans doing web navigation for a task step by step. At each stage, you can see the webpage like humans by a screenshot and know the previous actions before the current step decided by yourself through recorded history. You need to decide on the first following action to take. You can click an element with the mouse, select an option, or type text with the keyboard. (For your understanding, they are like the click(), select_option() and type() functions in playwright respectively) One next step means one operation within the three.'''
 
@@ -83,7 +82,7 @@ exp4_prompt_dict = {
 
     "question_description": question_description_new_exp4,
 
-    "referring_description": f"""(Reiteration)
+    "referring_description": """(Reiteration)
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Multichoice Question)
@@ -106,7 +105,7 @@ exp2_prompt_dict = {
 
     "question_description": question_description_new_exp2,
 
-    "referring_description": f"""(Reiteration)
+    "referring_description": """(Reiteration)
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Verification with the Screenshot)
@@ -129,7 +128,7 @@ exp3_prompt_dict = {
 
     "question_description": question_description_new_exp3,
 
-    "referring_description": f"""""",
+    "referring_description": """""",
 
     "element_format": """(Final Answer)
 Finally, conclude your answer using the format below. Ensure your answer is strictly adhering to the format provided below. Please do not leave any explanation in your answers of the final standardized format part, and this final part should be clear and certain. The element, element type, element text, action and value should be in five separate lines.
@@ -188,7 +187,7 @@ seeact_choice_prompt_dict = {
 
     "question_description": seeact_online_question_description_new_exp4, # question_description_new_exp4+ "You are asked to complete..." + "Previous Actions: "= prompt1
 
-    "referring_description": f"""(Reiteration) 
+    "referring_description": """(Reiteration) 
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Multichoice Question)

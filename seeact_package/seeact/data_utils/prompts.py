@@ -49,7 +49,7 @@ seeact_choice_prompt_dict = {
 
     "question_description": seeact_online_question_description_new_exp4,
 
-    "referring_description": f"""(Reiteration)
+    "referring_description": """(Reiteration)
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Multichoice Question)

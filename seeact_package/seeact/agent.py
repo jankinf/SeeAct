@@ -171,7 +171,7 @@ class SeeActAgent:
 
     def _initialize_prompts(self):
         """Initialize prompt information including dynamic action space."""
-        action_format = f"ACTION: Choose an action from allowed actions."  # Dynamically generate action_format based on self.action_space
+        action_format = "ACTION: Choose an action from allowed actions."  # Dynamically generate action_format based on self.action_space
 
         return {
             "system_prompt": '''You are assisting humans doing web navigation tasks step by step. At each stage, you can see the webpage by a screenshot and know the previous actions before the current step decided by yourself that have been executed for this task through recorded history. You need to decide on the first following action to take.''',
@@ -221,7 +221,7 @@ To be successful, it is important to follow the following rules:
 12. When there are multiple clickable buttons having the same value, choose the one with less obstacles in the screenshot.
 ''',
 
-            "referring_description": f"""(Reiteration)
+            "referring_description": """(Reiteration)
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Multichoice Question)
@@ -387,7 +387,7 @@ To be successful, it is important to follow the following rules:
                 with open(os.path.join(dirname(__file__), "mark_page.js")) as f:
                     mark_page_script = f.read()
                 await self.session_control['active_page'].evaluate(mark_page_script)
-        except Exception as e:
+        except Exception:
             pass
 
     async def start(self, headless=None, args=None, website=None):
@@ -603,7 +603,7 @@ To be successful, it is important to follow the following rules:
 
         try:
             await self.session_control["active_page"].wait_for_load_state('load')
-        except Exception as e:
+        except Exception:
             pass
 
         elements = await get_interactive_elements_with_playwright(self.page,
@@ -700,7 +700,7 @@ To be successful, it is important to follow the following rules:
         self.logger.info("-" * (terminal_width))
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
 
-            choice_text = f"Action Grounding ➡️" + "\n" + options
+            choice_text = "Action Grounding ➡️" + "\n" + options
             for line in choice_text.split('\n'):
                 self.logger.info(line)
 
@@ -710,7 +710,7 @@ To be successful, it is important to follow the following rules:
 
             pred_element = pred_element_label
             # Log the prediction result
-            self.logger.debug(f"Retrieved Answer")
+            self.logger.debug("Retrieved Answer")
             self.logger.debug(f"Predicted Element: {pred_element}")
             self.logger.debug(f"Action: {pred_action}")
             self.logger.debug(f"Value: {pred_value}")
@@ -723,7 +723,7 @@ To be successful, it is important to follow the following rules:
                           "description": pred_element_label}
 
         else:
-            choice_text = f"Action Grounding ➡️" + "\n" + options
+            choice_text = "Action Grounding ➡️" + "\n" + options
             choice_text = choice_text.replace("\n\n", "")
 
             for line in choice_text.split('\n'):
@@ -746,7 +746,7 @@ To be successful, it is important to follow the following rules:
             else:
                 pred_element = None
             # Log the prediction result
-            self.logger.debug(f"Retrieved Answer")
+            self.logger.debug("Retrieved Answer")
             self.logger.debug(f"Predicted Element: {pred_element}")
             self.logger.debug(f"Action: {pred_action}")
             self.logger.debug(f"Value: {pred_value}")
@@ -776,7 +776,7 @@ To be successful, it is important to follow the following rules:
             # Clear the marks before action
             if self.config["agent"]["grounding_strategy"] == "text_choice_som":
                 await self.page.evaluate("unmarkPage()")
-        except Exception as e:
+        except Exception:
             pass
 
         pred_element = prediction_dict["element"]

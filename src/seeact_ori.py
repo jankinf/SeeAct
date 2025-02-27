@@ -93,7 +93,7 @@ async def page_on_close_handler(page):
                 await session_control.context.new_page()
                 try:
                     await session_control.active_page.goto("https://www.google.com/", wait_until="load")
-                except Exception as e:
+                except Exception:
                     pass
                 await aprint("Switched the active tab to: ", session_control.active_page.url)
 
@@ -307,9 +307,9 @@ async def main(config, base_dir) -> None:
                 if len(elements) == 0:
                     if monitor:
                         logger.info(
-                            f"----------There is no element in this page. Do you want to terminate or continue after"
-                            f"human intervention? [i/e].\ni(Intervene): Reject this action, and pause for human "
-                            f"intervention.\ne(Exit): Terminate the program and save results.")
+                            "----------There is no element in this page. Do you want to terminate or continue after"
+                            "human intervention? [i/e].\ni(Intervene): Reject this action, and pause for human "
+                            "intervention.\ne(Exit): Terminate the program and save results.")
                         monitor_input = await ainput()
                         logger.info("Monitor Command: " + monitor_input)
                         if monitor_input in ["i", "intervene", 'intervention']:
@@ -319,7 +319,7 @@ async def main(config, base_dir) -> None:
                             if human_intervention:
                                 human_intervention = f"Human intervention with a message: {human_intervention}"
                             else:
-                                human_intervention = f"Human intervention"
+                                human_intervention = "Human intervention"
                             taken_actions.append(human_intervention)
                             continue
 
@@ -545,7 +545,7 @@ async def main(config, base_dir) -> None:
 
                     if monitor:
                         logger.info(
-                            f"----------\nShould I execute the above action? [Y/n/i/e].\nY/n: Accept or reject this action.\ni(Intervene): Reject this action, and pause for human intervention.\ne(Exit): Terminate the program and save results.")
+                            "----------\nShould I execute the above action? [Y/n/i/e].\nY/n: Accept or reject this action.\ni(Intervene): Reject this action, and pause for human intervention.\ne(Exit): Terminate the program and save results.")
                         monitor_input = await ainput()
                         logger.info("Monitor Command: " + monitor_input)
                         if monitor_input in ["n", "N", "No", "no"]:
@@ -581,7 +581,7 @@ async def main(config, base_dir) -> None:
                         if target_element == []:
                             pass
                         else:
-                            if not target_element in ["PRESS ENTER", "TERMINATE"]:
+                            if target_element not in ["PRESS ENTER", "TERMINATE"]:
                                 selector = target_element[-2]
                                 if dev_mode:
                                     logger.info(target_element)
@@ -590,7 +590,7 @@ async def main(config, base_dir) -> None:
                                     if highlight:
                                         await selector.highlight()
                                         await asyncio.sleep(2.5)
-                                except Exception as e:
+                                except Exception:
                                     pass
 
                         if selector:
@@ -611,13 +611,13 @@ async def main(config, base_dir) -> None:
                                             await selector.evaluate("element => element.click()", timeout=10000)
                                         else:
                                             raise Exception(e)
-                                    except Exception as ee:
+                                    except Exception:
                                         try:
                                             logger.info("Try performing a HOVER")
                                             await selector.hover(timeout=10000)
                                             new_action = new_action.replace("CLICK",
                                                                             f"Failed to CLICK because {e}, did a HOVER instead")
-                                        except Exception as eee:
+                                        except Exception:
                                             new_action = new_action.replace("CLICK", f"Failed to CLICK because {e}")
                                             no_op_count += 1
                             elif target_action == "TYPE":
@@ -627,7 +627,7 @@ async def main(config, base_dir) -> None:
                                         await selector.clear(timeout=10000)
                                         await selector.fill("", timeout=10000)
                                         await selector.press_sequentially(target_value, timeout=10000)
-                                    except Exception as e0:
+                                    except Exception:
                                         await selector.fill(target_value, timeout=10000)
                                 except Exception as e:
                                     try:
@@ -638,7 +638,7 @@ async def main(config, base_dir) -> None:
                                                                             f"Failed to TYPE \"{target_value}\" because {e}, did a SELECT {selected_value} instead")
                                         else:
                                             raise Exception(e)
-                                    except Exception as ee:
+                                    except Exception:
                                         js_click = True
                                         try:
                                             if target_element[-1] in ["select", "input"]:
@@ -663,7 +663,7 @@ async def main(config, base_dir) -> None:
                                                                       1] + " -> " + f"Failed to TYPE \"{target_value}\" because {e}, did a CLICK instead"
                                                 else:
                                                     raise Exception(eee)
-                                            except Exception as eeee:
+                                            except Exception:
                                                 try:
                                                     logger.info("Try performing a HOVER")
                                                     await selector.hover(timeout=10000)
@@ -688,13 +688,13 @@ async def main(config, base_dir) -> None:
                                                 await selector.clear(timeout=10000)
                                                 await selector.fill("", timeout=10000)
                                                 await selector.press_sequentially(target_value, timeout=10000)
-                                            except Exception as e0:
+                                            except Exception:
                                                 await selector.fill(target_value, timeout=10000)
                                             new_action = new_action.replace("SELECT",
                                                                             f"Failed to SELECT \"{target_value}\" because {e}, did a TYPE instead")
                                         else:
                                             raise Exception(e)
-                                    except Exception as ee:
+                                    except Exception:
                                         js_click = True
                                         try:
                                             if target_element[-1] in ["select", "input"]:
@@ -717,7 +717,7 @@ async def main(config, base_dir) -> None:
                                                                       1] + " -> " + f"Failed to SELECT \"{target_value}\" because {e}, did a CLICK instead"
                                                 else:
                                                     raise Exception(eee)
-                                            except Exception as eeee:
+                                            except Exception:
                                                 try:
                                                     logger.info("Try performing a HOVER")
                                                     await selector.hover(timeout=10000)
@@ -760,7 +760,7 @@ async def main(config, base_dir) -> None:
                                                                       1] + " -> " + f"Failed to HOVER because {e}, did a CLICK instead"
                                                 else:
                                                     raise Exception(eee)
-                                            except Exception as eeee:
+                                            except Exception:
                                                 new_action = "[" + target_element[2] + "]" + " "
                                                 new_action += target_element[
                                                                   1] + " -> " + f"Failed to HOVER because {e}"
@@ -769,7 +769,7 @@ async def main(config, base_dir) -> None:
                                 try:
                                     logger.info("Try performing a PRESS ENTER")
                                     await selector.press('Enter')
-                                except Exception as e:
+                                except Exception:
                                     await selector.click(timeout=10000)
                                     await session_control.active_page.keyboard.press('Enter')
                         elif monitor_signal == "pause":
@@ -788,7 +788,7 @@ async def main(config, base_dir) -> None:
                         no_op_count = 0
                         try:
                             await session_control.active_page.wait_for_load_state('load')
-                        except Exception as e:
+                        except Exception:
                             pass
                     except Exception as e:
                         if target_action not in ["TYPE", "SELECT"]:
@@ -808,7 +808,7 @@ async def main(config, base_dir) -> None:
                         await session_control.context.new_page()
                         try:
                             await session_control.active_page.goto(confirmed_website_url, wait_until="load")
-                        except Exception as e:
+                        except Exception:
                             pass
 
                     if monitor_signal == 'pause':

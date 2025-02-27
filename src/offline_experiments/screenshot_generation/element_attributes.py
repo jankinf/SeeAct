@@ -22,8 +22,6 @@ import cv2
 import copy
 from tqdm import tqdm
 import argparse
-import supervision as sv
-import torch
 import pickle as pkl
 
 from src.data_utils.image_utils import convert_elements2detections

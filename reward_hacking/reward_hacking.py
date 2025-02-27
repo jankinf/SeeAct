@@ -7,7 +7,6 @@ import argparse
 import requests
 import logging
 from datetime import datetime
-from dotenv import load_dotenv
 from llm_system_prompt import get_judge_system_prompt, get_attacker_system_prompt_wo_toxicity
 
 # 创建日志文件路径

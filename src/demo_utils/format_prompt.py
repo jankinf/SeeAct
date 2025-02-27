@@ -145,7 +145,7 @@ def format_ranking_input(elements, task, previous_actions):
                         if len(element[1].split()) < 20
                         else " ".join(element[1].split()[:20]) + "..."
                     )
-                    + (f"</{element[-1]}>" if element[-1]!='a' else f"</link>")
+                    + (f"</{element[-1]}>" if element[-1]!='a' else "</link>")
                     for i, element in enumerate(elements)
                 ]
 

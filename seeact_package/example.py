@@ -1,5 +1,4 @@
 import asyncio
-import os
 from seeact.agent import SeeActAgent
 
 # Setup your API Key here, or pass through environment

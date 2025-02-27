@@ -13,20 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pdb
 import random
 import socket
 import subprocess
 import re
 import asyncio
 from difflib import SequenceMatcher
-from playwright.sync_api import Playwright, expect, sync_playwright
+from playwright.sync_api import Playwright
 from pathlib import Path
 import toml
 import os
-import logging
-from aioconsole import ainput, aprint
-import time
 
 list_us_cities = [
     ["New York", 40.77, -73.98],

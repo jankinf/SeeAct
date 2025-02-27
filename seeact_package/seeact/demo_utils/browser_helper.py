@@ -16,7 +16,7 @@
 import re
 import asyncio
 from difflib import SequenceMatcher
-from playwright.sync_api import Playwright, expect, sync_playwright
+from playwright.sync_api import Playwright
 # from playwright.async_api import async_playwright
 from pathlib import Path
 import toml
@@ -305,7 +305,7 @@ async def get_element_data(element, tag_name,viewport_size,seen_elements=[]):
             "tag":real_tag_name
         }
         # return [center_point, description, tag_head, box_model, selector, real_tag_name]
-    except Exception as e:
+    except Exception:
         # print(e)
         return None
 
