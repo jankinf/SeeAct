@@ -108,22 +108,22 @@ async def page_on_open_handler(page):
     page.on("crash", page_on_crash_handler)
     session_control.active_page = page
 
-async def perform_action(selector, target_action, target_value, target_element):
+async def perform_action(selector, target_action, target_value, target_element, logger):
     try:
         if target_action == "CLICK":
-            await handle_click(selector, target_element)
+            await handle_click(selector, target_element, logger)
         elif target_action == "TYPE":
-            await handle_type(selector, target_value, target_element)
+            await handle_type(selector, target_value, target_element, logger)
         elif target_action == "SELECT":
-            await handle_select(selector, target_value, target_element)
+            await handle_select(selector, target_value, target_element, logger)
         elif target_action == "HOVER":
-            await handle_hover(selector)
+            await handle_hover(selector, target_element, logger)
         return True
     except Exception as e:
         logger.info(f"Failed to {target_action} because {e}")
         return False
 
-async def handle_click(selector, target_element):
+async def handle_click(selector, target_element, logger):
     js_click = True
     try:
         if target_element[-1] in ["select", "input"]:
@@ -148,7 +148,7 @@ async def handle_click(selector, target_element):
                 new_action = new_action.replace("CLICK", f"Failed to CLICK because {e}")
                 raise Exception(eee)
 
-async def handle_type(selector, target_value, target_element):
+async def handle_type(selector, target_value, target_element, logger):
     try:
         try:
             logger.info("Try performing a \"press_sequentially\"")
@@ -180,8 +180,6 @@ async def handle_type(selector, target_value, target_element):
             except Exception as eee:
                 try:
                     if not js_click:
-                        if dev_mode:
-                            logger.info(eee)
                         logger.info("Try performing a CLICK")
                         await selector.evaluate("element => element.click()", timeout=10000)
                         new_action = "[" + target_element[2] + "]" + " "
@@ -199,7 +197,7 @@ async def handle_type(selector, target_value, target_element):
                         new_action += target_element[1] + " -> " + f"Failed to TYPE \"{target_value}\" because {e}"
                         raise Exception(eee)
 
-async def handle_select(selector, target_value, target_element):
+async def handle_select(selector, target_value, target_element, logger):
     try:
         logger.info("Try performing a SELECT")
         selected_value = await select_option(selector, target_value)
@@ -248,7 +246,7 @@ async def handle_select(selector, target_value, target_element):
                         new_action += target_element[1] + " -> " + f"Failed to SELECT \"{target_value}\" because {e}"
                         raise Exception(eee)
 
-async def handle_hover(selector):
+async def handle_hover(selector, target_element, logger):
     try:
         logger.info("Try performing a HOVER")
         await selector.hover(timeout=10000)
@@ -281,7 +279,7 @@ async def handle_hover(selector):
                     new_action += target_element[1] + " -> " + f"Failed to HOVER because {e}"
                     raise Exception(eee)
 
-async def handle_press_enter(selector):
+async def handle_press_enter(selector, logger):
     try:
         logger.info("Try performing a PRESS ENTER")
         await selector.press('Enter')
@@ -759,7 +757,7 @@ async def main(config, base_dir) -> None:
                             if target_action == "PRESS ENTER":
                                 await handle_press_enter(selector)
                             else:
-                                action_success = await perform_action(selector, target_action, target_value, target_element)
+                                action_success = await perform_action(selector, target_action, target_value, target_element, logger)
                                 if not action_success:
                                     no_op_count += 1
                         elif monitor_signal == "pause":
