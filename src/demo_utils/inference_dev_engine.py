@@ -79,7 +79,7 @@ class OpenaiEngine(Engine):
         self.current_key_idx = 0
         self.client = OpenAI(
             api_key=self.api_keys[0],
-            base_url=os.getenv("OPENAI_BASE_URL", None),
+            base_url=os.getenv("OPENAI_API_BASE", None),
         )
         Engine.__init__(self, **kwargs)
 
@@ -207,7 +207,7 @@ class OpenaiEngine_MindAct(Engine):
         self.current_key_idx = 0
         self.client = OpenAI(
             api_key=self.api_keys[0],
-            base_url=os.getenv("OPENAI_BASE_URL", None),
+            base_url=os.getenv("OPENAI_API_BASE", None),
         )
 
         Engine.__init__(self, **kwargs)

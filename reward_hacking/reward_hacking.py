@@ -81,7 +81,7 @@ def get_perspective_toxicity_scores(dialogue_outputs):
 
     return scores
 
-openai.api_base = os.getenv("OPENAI_BASE_URL")
+openai.api_base = os.getenv("OPENAI_API_BASE")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def process_item(messages):

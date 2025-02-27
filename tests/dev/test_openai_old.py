@@ -4,7 +4,7 @@ import re
 import os
 
 load_dotenv()
-openai.api_base = os.getenv("OPENAI_BASE_URL")
+openai.api_base = os.getenv("OPENAI_API_BASE")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 system_prompt = "you're a helpful assistant"

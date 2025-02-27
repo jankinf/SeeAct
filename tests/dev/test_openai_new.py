@@ -1,13 +1,12 @@
 from dotenv import load_dotenv
 from openai import OpenAI
-import re
 import os
 
 load_dotenv()
 
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY", None),
-    base_url=os.getenv("OPENAI_BASE_URL", None),
+    base_url=os.getenv("OPENAI_API_BASE", None),
 )
 system_prompt = "you're a helpful assistant"
 
@@ -22,7 +21,8 @@ prompt_input = [
 ]
 
 response = client.chat.completions.create(
-    model="gpt-4o-2024-11-20",
+    # model="gpt-4o-2024-11-20",
+    model="gpt-4o-2024-08-06",
     messages=prompt_input,
     max_tokens=50,
     temperature=0,
