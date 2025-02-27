@@ -38,7 +38,8 @@ from data_utils.prompts import generate_prompt, format_options
 from demo_utils.browser_helper import (normal_launch_async, normal_new_context_async,
                                        get_interactive_elements_with_playwright, select_option, saveconfig)
 from demo_utils.format_prompt import format_choices, format_ranking_input, postprocess_action_lmm
-from demo_utils.inference_engine import OpenaiEngine
+# from demo_utils.inference_engine import OpenaiEngine
+from demo_utils.inference_dev_engine import OpenaiEngine
 from demo_utils.ranking_model import CrossEncoder, find_topk
 from demo_utils.website_dict import website_dict
 from dotenv import load_dotenv
@@ -431,7 +432,8 @@ async def main(config, base_dir) -> None:
             session_control.context.on("page", page_on_open_handler)
             
             # bypass login
-            with open('./cookies/taobao.json', 'r') as f:
+            # with open('./cookies/taobao.json', 'r') as f:
+            with open('./cookies/zhihu.json', 'r') as f:
                 cookies = json.load(f)
                 await session_control.context.add_cookies(cookies) # modify
 
