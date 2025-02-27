@@ -396,6 +396,11 @@ To be successful, it is important to follow the following rules:
                                                                              'viewport'])
 
         self.session_control['context'].on("page", self.page_on_open_handler)
+        
+        with open(self.config['browser']['cookie_file'], 'r') as f:
+            cookies = json.load(f)
+            await self.session_control['context'].add_cookies(cookies)
+
         await self.session_control['context'].new_page()
 
         if self.config["basic"]["crawler_mode"] is True:
