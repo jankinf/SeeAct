@@ -16,7 +16,6 @@ import os
 import time
 
 import backoff
-import openai
 from openai import (
     APIConnectionError,
     APIError,

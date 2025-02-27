@@ -27,7 +27,6 @@ import os
 import warnings
 from dataclasses import dataclass
 
-import openai
 import toml
 import torch
 from aioconsole import ainput, aprint

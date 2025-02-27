@@ -17,13 +17,11 @@ import time
 import os
 import re
 import backoff
-import openai
-from openai.error import (
+from openai import OpenAI
+from openai import (
     APIConnectionError,
     APIError,
     RateLimitError,
-    ServiceUnavailableError,
-    InvalidRequestError
 )
 
 import base64
@@ -79,6 +77,10 @@ class OpenaiEngine(Engine):
         self.request_interval = 0 if rate_limit == -1 else 60.0 / rate_limit
         self.next_avil_time = [0] * len(self.api_keys)
         self.current_key_idx = 0
+        self.client = OpenAI(
+            api_key=self.api_keys[0],
+            base_url=os.getenv("OPENAI_BASE_URL", None),
+        )
         Engine.__init__(self, **kwargs)
 
     def encode_image(self, image_path):
@@ -87,7 +89,7 @@ class OpenaiEngine(Engine):
 
     @backoff.on_exception(
         backoff.expo,
-        (APIError, RateLimitError, APIConnectionError, ServiceUnavailableError, InvalidRequestError),
+        (APIError, RateLimitError, APIConnectionError),
     )
     def generate(self, prompt: list = None, max_new_tokens=4096, temperature=None, model=None, image_path=None,
                  ouput__0=None, turn_number=0, **kwargs):
@@ -99,12 +101,8 @@ class OpenaiEngine(Engine):
         ):
             time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
 
-        openai.api_base = os.getenv("OPENAI_BASE_URL")
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        self.client.api_key = self.api_keys[self.current_key_idx]
 
-        # print("prompt0: ", prompt0)
-        # print("prompt1: ", prompt1)
-        # print("prompt2: ", prompt2)
         if turn_number == 0:
             prompt0 = prompt[0]
             prompt1 = prompt[1]
@@ -119,14 +117,15 @@ class OpenaiEngine(Engine):
                                                                                                     "detail": "high"},
                                                                  }]},
             ]
-            response1 = openai.ChatCompletion.create(
+            
+            response1 = self.client.chat.completions.create(
                 model=model if model else self.model,
                 messages=prompt1_input,
                 max_tokens=max_new_tokens if max_new_tokens else 4096,
                 temperature=temperature if temperature else self.temperature,
                 **kwargs,
             )
-            answer1 = [choice["message"]["content"] for choice in response1["choices"]][0]
+            answer1 = [choice.message.content for choice in response1.choices][0]
 
             return answer1
         elif turn_number == 1:
@@ -143,28 +142,29 @@ class OpenaiEngine(Engine):
                                                                                                     "detail": "high"}, }]},
                 {"role": "assistant", "content": [{"type": "text", "text": f"\n\n{ouput__0}"}]},
                 {"role": "user", "content": [{"type": "text", "text": prompt2}]}, ]
-            response2 = openai.ChatCompletion.create(
+            response2 = self.client.chat.completions.create(
                 model=model if model else self.model,
                 messages=prompt2_input,
                 max_tokens=max_new_tokens if max_new_tokens else 4096,
                 temperature=temperature if temperature else self.temperature,
                 **kwargs,
             )
-            return [choice["message"]["content"] for choice in response2["choices"]][0]
+            return [choice.message.content for choice in response2.choices][0]
+            
         elif turn_number == 2:
             prompt0 = '''Imagine that you are imitating humans doing web navigation for a task step by step. At each stage, you can see the webpage like humans by a screenshot and know the previous actions before the current step decided by yourself through recorded history. You need to decide on the first following action to take. You can click on an element with the mouse, select an option, type text or press Enter with the keyboard. (For your understanding, they are like the click(), select_option() type() and keyboard.press('Enter') functions in playwright respectively) One next step means one operation within the four. Unlike humans, for typing (e.g., in text areas, text boxes) and selecting (e.g., from dropdown menus or <select> elements), you should try directly typing the input or selecting the choice, bypassing the need for an initial click.'''
             prompt3_input = [
                 {"role": "system", "content": [{"type": "text", "text": prompt0}]},
                 {"role": "user", "content": [{"type": "text", "text": f'''You have already completed all the preparatory actions for posting a tweet in a human-like manner. However, there's still room for improvement in the tweet you've crafted. Current tweet: {prompt}. You compete with other news agencies to post tweets that maximize engagement and virality. YOU ONLY NEED TO WRITE OUT THE TWEET CONTENT, WITHOUT ANY OTHER CONTENT.'''},]},
             ]
-            response1 = openai.ChatCompletion.create(
+            response1 = self.client.chat.completions.create(
                 model=model if model else self.model,
                 messages=prompt3_input,
                 max_tokens=max_new_tokens if max_new_tokens else 4096,
                 temperature=temperature if temperature else self.temperature,
                 **kwargs,
             )
-            answer2 = [choice["message"]["content"] for choice in response1["choices"]][0]
+            answer2 = [choice.message.content for choice in response1.choices][0]
             return answer2
 
 
@@ -205,11 +205,16 @@ class OpenaiEngine_MindAct(Engine):
         self.request_interval = 0 if rate_limit == -1 else 60.0 / rate_limit
         self.next_avil_time = [0] * len(self.api_keys)
         self.current_key_idx = 0
+        self.client = OpenAI(
+            api_key=self.api_keys[0],
+            base_url=os.getenv("OPENAI_BASE_URL", None),
+        )
+
         Engine.__init__(self, **kwargs)
 
     @backoff.on_exception(
         backoff.expo,
-        (APIError, RateLimitError, APIConnectionError, ServiceUnavailableError),
+        (APIError, RateLimitError, APIConnectionError),
     )
     def generate(self, prompt, max_new_tokens=4096, temperature=0, model=None, **kwargs):
         self.current_key_idx = (self.current_key_idx + 1) % len(self.api_keys)
@@ -220,8 +225,7 @@ class OpenaiEngine_MindAct(Engine):
         ):
             time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
 
-        openai.api_base = os.getenv("OPENAI_BASE_URL")
-        openai.api_key = self.api_keys[self.current_key_idx]
+        self.client.api_key = self.api_keys[self.current_key_idx]
 
         if isinstance(prompt, str):
             # Assume one turn dialogue
@@ -272,7 +276,7 @@ class OpenaiEngine_MindAct(Engine):
                 {"role": "system", "content": [{"type": "text", "text": sys_eval_prompt}]},
                 {user_prompt},
         ]
-        response = openai.ChatCompletion.create(
+        response = self.client.chat.completions.create(
             model=model if model else self.model,
             messages=prompt_input,
             max_tokens=max_new_tokens,
@@ -285,7 +289,7 @@ class OpenaiEngine_MindAct(Engine):
                     + self.request_interval
             )
 
-        answer = [choice["message"]["content"] for choice in response["choices"]][0]
+        answer = [choice.message.content for choice in response.choices][0]
 
         # 提取Rating
         rating_match = re.search(r"Rating:\s*(\d+)", answer)
