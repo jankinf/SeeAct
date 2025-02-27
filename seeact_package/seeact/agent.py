@@ -687,7 +687,7 @@ To be successful, it is important to follow the following rules:
         for action in self.taken_actions:
             self.logger.info(action)
 
-        output0 = self.engine.generate(prompt=prompt, image_path=self.screenshot_path, turn_number=0)
+        output0 = self.engine.generate(prompt=prompt, image_path=self.screenshot_path, turn_number=0, custom_llm_provider="custom_openai", api_key=os.getenv("OPENAI_API_KEY"), api_base=os.getenv("OPENAI_API_BASE"))
 
         terminal_width = 10
         self.logger.info("-" * terminal_width)
@@ -730,7 +730,7 @@ To be successful, it is important to follow the following rules:
                 self.logger.info(line)
 
             output = self.engine.generate(prompt=prompt, image_path=self.screenshot_path, turn_number=1,
-                                          ouput_0=output0)
+                                          ouput_0=output0, custom_llm_provider="custom_openai", api_key=os.getenv("OPENAI_API_KEY"), api_base=os.getenv("OPENAI_API_BASE"))
             self.logger.info("🤖 Action Grounding Output 🤖")
             for line in output.split('\n'):
                 self.logger.info(line)
