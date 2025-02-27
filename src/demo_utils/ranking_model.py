@@ -26,6 +26,8 @@ from tqdm.autonotebook import tqdm, trange
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
 def find_topk(a, k, axis=-1, largest=True, sorted=True):
     if axis is None:
         axis_size = a.size
@@ -46,12 +48,13 @@ def find_topk(a, k, axis=-1, largest=True, sorted=True):
         if largest:
             sorted_indices_in_topk = np.flip(sorted_indices_in_topk, axis=axis)
         sorted_topk_values = np.take_along_axis(
-            topk_values, sorted_indices_in_topk, axis=axis)
+            topk_values, sorted_indices_in_topk, axis=axis
+        )
         sorted_topk_indices = np.take_along_axis(
-            topk_indices, sorted_indices_in_topk, axis=axis)
+            topk_indices, sorted_indices_in_topk, axis=axis
+        )
         return sorted_topk_values, sorted_topk_indices
     return topk_values, topk_indices
-
 
 
 class CrossEncoder(CrossEncoder):

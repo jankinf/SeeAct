@@ -17,12 +17,14 @@ import re
 import asyncio
 from difflib import SequenceMatcher
 from playwright.sync_api import Playwright
+
 # from playwright.async_api import async_playwright
 from pathlib import Path
 import toml
 import os
 
-async def normal_launch_async(playwright: Playwright,headless=False,args=None):
+
+async def normal_launch_async(playwright: Playwright, headless=False, args=None):
     browser = await playwright.chromium.launch(
         traces_dir=None,
         headless=headless,
@@ -33,20 +35,19 @@ async def normal_launch_async(playwright: Playwright,headless=False,args=None):
     return browser
 
 
-
 async def normal_new_context_async(
-        browser,
-        storage_state=None,
-        har_path=None,
-        video_path=None,
-        tracing=False,
-        trace_screenshots=False,
-        trace_snapshots=False,
-        trace_sources=False,
-        locale=None,
-        geolocation=None,
-        user_agent: str = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-        viewport: dict = {"width": 1280, "height": 720},
+    browser,
+    storage_state=None,
+    har_path=None,
+    video_path=None,
+    tracing=False,
+    trace_screenshots=False,
+    trace_snapshots=False,
+    trace_sources=False,
+    locale=None,
+    geolocation=None,
+    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+    viewport: dict = {"width": 1280, "height": 720},
 ):
     context = await browser.new_context(
         storage_state=storage_state,
@@ -59,8 +60,13 @@ async def normal_new_context_async(
     )
 
     if tracing:
-        await context.tracing.start(screenshots=trace_screenshots, snapshots=trace_snapshots, sources=trace_sources)
+        await context.tracing.start(
+            screenshots=trace_screenshots,
+            snapshots=trace_snapshots,
+            sources=trace_sources,
+        )
     return context
+
 
 #
 # def persistent_launch(playwright: Playwright, user_data_dir: str = ""):
@@ -99,26 +105,26 @@ async def normal_new_context_async(
 #     return context
 
 
-
 def remove_extra_eol(text):
     # Replace EOL symbols
-    text = text.replace('\n', ' ')
-    return re.sub(r'\s{2,}', ' ', text)
+    text = text.replace("\n", " ")
+    return re.sub(r"\s{2,}", " ", text)
 
 
 def get_first_line(s):
-    first_line = s.split('\n')[0]
+    first_line = s.split("\n")[0]
     tokens = first_line.split()
     if len(tokens) > 8:
-        return ' '.join(tokens[:8]) + '...'
+        return " ".join(tokens[:8]) + "..."
     else:
         return first_line
 
+
 async def get_element_description(element, tag_name, role_value, type_value):
-    '''
-         Asynchronously generates a descriptive text for a web element based on its tag type.
-         Handles various HTML elements like 'select', 'input', and 'textarea', extracting attributes and content relevant to accessibility and interaction.
-    '''
+    """
+    Asynchronously generates a descriptive text for a web element based on its tag type.
+    Handles various HTML elements like 'select', 'input', and 'textarea', extracting attributes and content relevant to accessibility and interaction.
+    """
     # text_content = await element.inner_text(timeout=0)
     # text = (text_content or '').strip()
     #
@@ -141,7 +147,7 @@ async def get_element_description(element, tag_name, role_value, type_value):
     ]
 
     parent_value = "parent_node: "
-    parent_locator = element.locator('xpath=..')
+    parent_locator = element.locator("xpath=..")
     num_parents = await parent_locator.count()
     if num_parents > 0:
         # only will be zero or one parent node
@@ -163,8 +169,10 @@ async def get_element_description(element, tag_name, role_value, type_value):
         )
 
         if text2:
-            options = await element.evaluate("select => Array.from(select.options).map(option => option.text)",
-                                             timeout=0)
+            options = await element.evaluate(
+                "select => Array.from(select.options).map(option => option.text)",
+                timeout=0,
+            )
             text4 = " | ".join(options)
 
             if not text4:
@@ -172,8 +180,9 @@ async def get_element_description(element, tag_name, role_value, type_value):
                 if not text4:
                     text4 = await element.inner_text(timeout=0)
 
-
-            return parent_value+text1 + remove_extra_eol(text2.strip()) + text3 + text4
+            return (
+                parent_value + text1 + remove_extra_eol(text2.strip()) + text3 + text4
+            )
 
     input_value = ""
 
@@ -184,17 +193,17 @@ async def get_element_description(element, tag_name, role_value, type_value):
             text1 = "input value="
             text2 = await element.input_value(timeout=0)
             if text2:
-                input_value = text1 + "\"" + text2 + "\"" + " "
+                input_value = text1 + '"' + text2 + '"' + " "
 
     text_content = await element.text_content(timeout=0)
-    text = (text_content or '').strip()
+    text = (text_content or "").strip()
 
     # print(text)
     if text:
         text = remove_extra_eol(text)
         if len(text) > 80:
             text_content_in = await element.inner_text(timeout=0)
-            text_in = (text_content_in or '').strip()
+            text_in = (text_content_in or "").strip()
             if text_in:
                 return input_value + remove_extra_eol(text_in)
         else:
@@ -205,22 +214,21 @@ async def get_element_description(element, tag_name, role_value, type_value):
     for attr in salient_attributes:
         attribute_value = await element.get_attribute(attr, timeout=0)
         if attribute_value:
-            text1 += f"{attr}=" + "\"" + attribute_value.strip() + "\"" + " "
+            text1 += f"{attr}=" + '"' + attribute_value.strip() + '"' + " "
 
     text = (parent_value + text1).strip()
     if text:
         return input_value + remove_extra_eol(text.strip())
 
-
     # try to get from the first child node
-    first_child_locator = element.locator('xpath=./child::*[1]')
+    first_child_locator = element.locator("xpath=./child::*[1]")
 
     num_childs = await first_child_locator.count()
-    if num_childs>0:
+    if num_childs > 0:
         for attr in salient_attributes:
             attribute_value = await first_child_locator.get_attribute(attr, timeout=0)
             if attribute_value:
-                text1 += f"{attr}=" + "\"" + attribute_value.strip() + "\"" + " "
+                text1 += f"{attr}=" + '"' + attribute_value.strip() + '"' + " "
 
         text = (parent_value + text1).strip()
         if text:
@@ -229,28 +237,41 @@ async def get_element_description(element, tag_name, role_value, type_value):
     return None
 
 
-async def get_element_data(element, tag_name,viewport_size,seen_elements=[]):
+async def get_element_data(element, tag_name, viewport_size, seen_elements=[]):
     try:
-        tag_name_list = ['a', 'button',
-                         'input',
-                         'select', 'textarea', 'adc-tab']
-
+        tag_name_list = ["a", "button", "input", "select", "textarea", "adc-tab"]
 
         if await element.is_hidden(timeout=0) or await element.is_disabled(timeout=0):
             return None
 
+        rect = await element.bounding_box() or {
+            "x": -1,
+            "y": -1,
+            "width": 0,
+            "height": 0,
+        }
 
-
-        rect = await element.bounding_box() or {'x': -1, 'y': -1, 'width': 0, 'height': 0}
-
-
-        if rect['x']<0 or rect['y']<0 or rect['width']<=4 or rect['height']<=4 or rect['y']+rect['height']>viewport_size["height"] or rect['x']+ rect['width']>viewport_size["width"]:
+        if (
+            rect["x"] < 0
+            or rect["y"] < 0
+            or rect["width"] <= 4
+            or rect["height"] <= 4
+            or rect["y"] + rect["height"] > viewport_size["height"]
+            or rect["x"] + rect["width"] > viewport_size["width"]
+        ):
             return None
 
-        box_raw = [rect['x'], rect['y'], rect['width'], rect['height']]
-        box_model = [rect['x'], rect['y'], rect['x'] + rect['width'], rect['y'] + rect['height']]
-        center_point = (round((box_model[0] + box_model[2]) / 2 / viewport_size["width"], 3),
-                        round((box_model[1] + box_model[3]) / 2 / viewport_size["height"], 3))
+        box_raw = [rect["x"], rect["y"], rect["width"], rect["height"]]
+        box_model = [
+            rect["x"],
+            rect["y"],
+            rect["x"] + rect["width"],
+            rect["y"] + rect["height"],
+        ]
+        center_point = (
+            round((box_model[0] + box_model[2]) / 2 / viewport_size["width"], 3),
+            round((box_model[1] + box_model[3]) / 2 / viewport_size["height"], 3),
+        )
 
         if center_point in seen_elements:
             return None
@@ -261,48 +282,75 @@ async def get_element_data(element, tag_name,viewport_size,seen_elements=[]):
             tag_head = tag_name
             real_tag_name = tag_name
         else:
-            real_tag_name = await element.evaluate("element => element.tagName.toLowerCase()", timeout=0)
+            real_tag_name = await element.evaluate(
+                "element => element.tagName.toLowerCase()", timeout=0
+            )
             if real_tag_name in tag_name_list:
                 # already detected
                 return None
             else:
                 tag_head = real_tag_name
 
-        text_element = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'td', "div","em","center","strong","b","i","small","mark","abbr","cite","q","blockquote","span","nobr"]
+        text_element = [
+            "p",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "td",
+            "div",
+            "em",
+            "center",
+            "strong",
+            "b",
+            "i",
+            "small",
+            "mark",
+            "abbr",
+            "cite",
+            "q",
+            "blockquote",
+            "span",
+            "nobr",
+        ]
 
         if real_tag_name in text_element:
             return None
 
-        role_value = await element.get_attribute('role', timeout=0)
-        type_value = await element.get_attribute('type', timeout=0)
+        role_value = await element.get_attribute("role", timeout=0)
+        type_value = await element.get_attribute("type", timeout=0)
         # await aprint("start to get element description",element,tag_name )
-        description = await get_element_description(element, real_tag_name, role_value, type_value)
+        description = await get_element_description(
+            element, real_tag_name, role_value, type_value
+        )
         # print(description)
         if not description:
             return None
 
         if role_value:
-            tag_head += " role=" + "\"" + role_value + "\""
+            tag_head += " role=" + '"' + role_value + '"'
         if type_value:
-            tag_head += " type=" + "\"" + type_value + "\""
+            tag_head += " type=" + '"' + type_value + '"'
 
-        '''
+        """
                      0: center_point =(x,y)
                      1: description
                      2: tag_with_role: tag_head with role and type # TODO: Consider adding more
                      3. box
                      4. selector
                      5. tag
-                     '''
+                     """
         selector = element
         return {
-            "center_point":center_point,
-            "description":description,
-            "tag_with_role":tag_head,
-            "box_raw":box_raw,
-            "box":box_model,
-            "selector":selector,
-            "tag":real_tag_name
+            "center_point": center_point,
+            "description": description,
+            "tag_with_role": tag_head,
+            "box_raw": box_raw,
+            "box": box_model,
+            "selector": selector,
+            "tag": real_tag_name,
         }
         # return [center_point, description, tag_head, box_model, selector, real_tag_name]
     except Exception:
@@ -310,16 +358,17 @@ async def get_element_data(element, tag_name,viewport_size,seen_elements=[]):
         return None
 
 
-async def get_interactive_elements_with_playwright(page,viewport_size):
+async def get_interactive_elements_with_playwright(page, viewport_size):
     interactive_elements_selectors = [
-        'a', 'button',
-        'input',
-        'select', 'textarea',
+        "a",
+        "button",
+        "input",
+        "select",
+        "textarea",
     ]
 
     seen_elements = set()
     tasks = []
-
 
     for selector in interactive_elements_selectors:
         locator = page.locator(selector)
@@ -327,7 +376,7 @@ async def get_interactive_elements_with_playwright(page,viewport_size):
         for index in range(element_count):
             element = locator.nth(index)
             tag_name = selector
-            task = get_element_data(element, tag_name,viewport_size)
+            task = get_element_data(element, tag_name, viewport_size)
 
             tasks.append(task)
 
@@ -342,9 +391,7 @@ async def get_interactive_elements_with_playwright(page,viewport_size):
                 seen_elements.add(i["center_point"])
                 interactive_elements.append(i)
 
-    interactive_elements_selectors = [
-        '*'
-    ]
+    interactive_elements_selectors = ["*"]
     tasks = []
 
     for selector in interactive_elements_selectors:
@@ -353,12 +400,11 @@ async def get_interactive_elements_with_playwright(page,viewport_size):
         for index in range(element_count):
             element = locator.nth(index)
             tag_name = selector
-            task = get_element_data(element, tag_name, viewport_size,seen_elements)
+            task = get_element_data(element, tag_name, viewport_size, seen_elements)
 
             tasks.append(task)
 
     results = await asyncio.gather(*tasks)
-
 
     for i in results:
         if i:
@@ -388,11 +434,10 @@ def saveconfig(config, save_file):
     save_path: saving path include file name.
     """
 
-
     if isinstance(save_file, str):
         save_file = Path(save_file)
     if isinstance(config, dict):
-        with open(save_file, 'w') as f:
+        with open(save_file, "w") as f:
             config_without_key = config
             config_without_key["openai"]["api_key"] = "Your API key here"
             toml.dump(config_without_key, f)

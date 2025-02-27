@@ -27,9 +27,10 @@ import base64
 
 load_dotenv()
 
+
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
 
 class Engine:
@@ -42,13 +43,13 @@ class Engine:
 
 class OpenaiEngine(Engine):
     def __init__(
-            self,
-            api_key=None,
-            stop=["\n\n"],
-            rate_limit=-1,
-            model=None,
-            temperature=0,
-            **kwargs,
+        self,
+        api_key=None,
+        stop=["\n\n"],
+        rate_limit=-1,
+        model=None,
+        temperature=0,
+        **kwargs,
     ) -> None:
         """Init an OpenAI GPT/Codex engine
 
@@ -59,7 +60,7 @@ class OpenaiEngine(Engine):
             model (_type_, optional): Model family. Defaults to None.
         """
         assert (
-                os.getenv("OPENAI_API_KEY", api_key) is not None
+            os.getenv("OPENAI_API_KEY", api_key) is not None
         ), "must pass on the api_key or set OPENAI_API_KEY in the environment"
         if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY", api_key)
@@ -84,19 +85,28 @@ class OpenaiEngine(Engine):
 
     def encode_image(self, image_path):
         with open(self, image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
+            return base64.b64encode(image_file.read()).decode("utf-8")
 
     @backoff.on_exception(
         backoff.expo,
         (APIError, RateLimitError, APIConnectionError),
     )
-    def generate(self, prompt: list = None, max_new_tokens=4096, temperature=None, model=None, image_path=None,
-                 ouput__0=None, turn_number=0, **kwargs):
+    def generate(
+        self,
+        prompt: list = None,
+        max_new_tokens=4096,
+        temperature=None,
+        model=None,
+        image_path=None,
+        ouput__0=None,
+        turn_number=0,
+        **kwargs,
+    ):
         self.current_key_idx = (self.current_key_idx + 1) % len(self.api_keys)
         start_time = time.time()
         if (
-                self.request_interval > 0
-                and start_time < self.next_avil_time[self.current_key_idx]
+            self.request_interval > 0
+            and start_time < self.next_avil_time[self.current_key_idx]
         ):
             time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
 
@@ -110,11 +120,19 @@ class OpenaiEngine(Engine):
             # Assume one turn dialogue
             prompt1_input = [
                 {"role": "system", "content": [{"type": "text", "text": prompt0}]},
-                {"role": "user",
-                 "content": [{"type": "text", "text": prompt1}, {"type": "image_url", "image_url": {"url":
-                                                                                                        f"data:image/jpeg;base64,{base64_image}",
-                                                                                                    "detail": "high"},
-                                                                 }]},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt1},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                },
             ]
             response1 = self.client.chat.completions.create(
                 model=model if model else self.model,
@@ -130,12 +148,25 @@ class OpenaiEngine(Engine):
             base64_image = encode_image(image_path)
             prompt2_input = [
                 {"role": "system", "content": [{"type": "text", "text": prompt0}]},
-                {"role": "user",
-                 "content": [{"type": "text", "text": prompt1}, {"type": "image_url", "image_url": {"url":
-                                                                                                        f"data:image/jpeg;base64,{base64_image}",
-                                                                                                    "detail": "high"}, }]},
-                {"role": "assistant", "content": [{"type": "text", "text": f"\n\n{ouput__0}"}]},
-                {"role": "user", "content": [{"type": "text", "text": prompt2}]}, ]
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt1},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": f"\n\n{ouput__0}"}],
+                },
+                {"role": "user", "content": [{"type": "text", "text": prompt2}]},
+            ]
             response2 = self.client.chat.completions.create(
                 model=model if model else self.model,
                 messages=prompt2_input,
@@ -148,13 +179,13 @@ class OpenaiEngine(Engine):
 
 class OpenaiEngine_MindAct(Engine):
     def __init__(
-            self,
-            api_key=None,
-            stop=["\n\n"],
-            rate_limit=-1,
-            model=None,
-            temperature=0,
-            **kwargs,
+        self,
+        api_key=None,
+        stop=["\n\n"],
+        rate_limit=-1,
+        model=None,
+        temperature=0,
+        **kwargs,
     ) -> None:
         """Init an OpenAI GPT/Codex engine
 
@@ -165,7 +196,7 @@ class OpenaiEngine_MindAct(Engine):
             model (_type_, optional): Model family. Defaults to None.
         """
         assert (
-                os.getenv("OPENAI_API_KEY", api_key) is not None
+            os.getenv("OPENAI_API_KEY", api_key) is not None
         ), "must pass on the api_key or set OPENAI_API_KEY in the environment"
         if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY", api_key)
@@ -192,12 +223,14 @@ class OpenaiEngine_MindAct(Engine):
         backoff.expo,
         (APIError, RateLimitError, APIConnectionError),
     )
-    def generate(self, prompt, max_new_tokens=4096, temperature=0, model=None, **kwargs):
+    def generate(
+        self, prompt, max_new_tokens=4096, temperature=0, model=None, **kwargs
+    ):
         self.current_key_idx = (self.current_key_idx + 1) % len(self.api_keys)
         start_time = time.time()
         if (
-                self.request_interval > 0
-                and start_time < self.next_avil_time[self.current_key_idx]
+            self.request_interval > 0
+            and start_time < self.next_avil_time[self.current_key_idx]
         ):
             time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
 
@@ -217,7 +250,7 @@ class OpenaiEngine_MindAct(Engine):
         )
         if self.request_interval > 0:
             self.next_avil_time[self.current_key_idx] = (
-                    max(start_time, self.next_avil_time[self.current_key_idx])
-                    + self.request_interval
+                max(start_time, self.next_avil_time[self.current_key_idx])
+                + self.request_interval
             )
         return [choice.message.content for choice in response.choices][0]

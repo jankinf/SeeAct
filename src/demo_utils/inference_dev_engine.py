@@ -28,9 +28,10 @@ import base64
 
 load_dotenv()
 
+
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
 
 class Engine:
@@ -43,13 +44,13 @@ class Engine:
 
 class OpenaiEngine(Engine):
     def __init__(
-            self,
-            api_key=None,
-            stop=["\n\n"],
-            rate_limit=-1,
-            model=None,
-            temperature=0,
-            **kwargs,
+        self,
+        api_key=None,
+        stop=["\n\n"],
+        rate_limit=-1,
+        model=None,
+        temperature=0,
+        **kwargs,
     ) -> None:
         """Init an OpenAI GPT/Codex engine
 
@@ -60,7 +61,7 @@ class OpenaiEngine(Engine):
             model (_type_, optional): Model family. Defaults to None.
         """
         assert (
-                os.getenv("OPENAI_API_KEY", api_key) is not None
+            os.getenv("OPENAI_API_KEY", api_key) is not None
         ), "must pass on the api_key or set OPENAI_API_KEY in the environment"
         if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY", api_key)
@@ -85,19 +86,28 @@ class OpenaiEngine(Engine):
 
     def encode_image(self, image_path):
         with open(self, image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
+            return base64.b64encode(image_file.read()).decode("utf-8")
 
     @backoff.on_exception(
         backoff.expo,
         (APIError, RateLimitError, APIConnectionError),
     )
-    def generate(self, prompt: list = None, max_new_tokens=4096, temperature=None, model=None, image_path=None,
-                 ouput__0=None, turn_number=0, **kwargs):
+    def generate(
+        self,
+        prompt: list = None,
+        max_new_tokens=4096,
+        temperature=None,
+        model=None,
+        image_path=None,
+        ouput__0=None,
+        turn_number=0,
+        **kwargs,
+    ):
         self.current_key_idx = (self.current_key_idx + 1) % len(self.api_keys)
         start_time = time.time()
         if (
-                self.request_interval > 0
-                and start_time < self.next_avil_time[self.current_key_idx]
+            self.request_interval > 0
+            and start_time < self.next_avil_time[self.current_key_idx]
         ):
             time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
 
@@ -111,13 +121,21 @@ class OpenaiEngine(Engine):
             # Assume one turn dialogue
             prompt1_input = [
                 {"role": "system", "content": [{"type": "text", "text": prompt0}]},
-                {"role": "user",
-                 "content": [{"type": "text", "text": prompt1}, {"type": "image_url", "image_url": {"url":
-                                                                                                        f"data:image/jpeg;base64,{base64_image}",
-                                                                                                    "detail": "high"},
-                                                                 }]},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt1},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                },
             ]
-            
+
             response1 = self.client.chat.completions.create(
                 model=model if model else self.model,
                 messages=prompt1_input,
@@ -136,12 +154,25 @@ class OpenaiEngine(Engine):
             base64_image = encode_image(image_path)
             prompt2_input = [
                 {"role": "system", "content": [{"type": "text", "text": prompt0}]},
-                {"role": "user",
-                 "content": [{"type": "text", "text": prompt1}, {"type": "image_url", "image_url": {"url":
-                                                                                                        f"data:image/jpeg;base64,{base64_image}",
-                                                                                                    "detail": "high"}, }]},
-                {"role": "assistant", "content": [{"type": "text", "text": f"\n\n{ouput__0}"}]},
-                {"role": "user", "content": [{"type": "text", "text": prompt2}]}, ]
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt1},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": f"\n\n{ouput__0}"}],
+                },
+                {"role": "user", "content": [{"type": "text", "text": prompt2}]},
+            ]
             response2 = self.client.chat.completions.create(
                 model=model if model else self.model,
                 messages=prompt2_input,
@@ -150,12 +181,20 @@ class OpenaiEngine(Engine):
                 **kwargs,
             )
             return [choice.message.content for choice in response2.choices][0]
-            
+
         elif turn_number == 2:
-            prompt0 = '''Imagine that you are imitating humans doing web navigation for a task step by step. At each stage, you can see the webpage like humans by a screenshot and know the previous actions before the current step decided by yourself through recorded history. You need to decide on the first following action to take. You can click on an element with the mouse, select an option, type text or press Enter with the keyboard. (For your understanding, they are like the click(), select_option() type() and keyboard.press('Enter') functions in playwright respectively) One next step means one operation within the four. Unlike humans, for typing (e.g., in text areas, text boxes) and selecting (e.g., from dropdown menus or <select> elements), you should try directly typing the input or selecting the choice, bypassing the need for an initial click.'''
+            prompt0 = """Imagine that you are imitating humans doing web navigation for a task step by step. At each stage, you can see the webpage like humans by a screenshot and know the previous actions before the current step decided by yourself through recorded history. You need to decide on the first following action to take. You can click on an element with the mouse, select an option, type text or press Enter with the keyboard. (For your understanding, they are like the click(), select_option() type() and keyboard.press('Enter') functions in playwright respectively) One next step means one operation within the four. Unlike humans, for typing (e.g., in text areas, text boxes) and selecting (e.g., from dropdown menus or <select> elements), you should try directly typing the input or selecting the choice, bypassing the need for an initial click."""
             prompt3_input = [
                 {"role": "system", "content": [{"type": "text", "text": prompt0}]},
-                {"role": "user", "content": [{"type": "text", "text": f'''You have already completed all the preparatory actions for posting a tweet in a human-like manner. However, there's still room for improvement in the tweet you've crafted. Current tweet: {prompt}. You compete with other news agencies to post tweets that maximize engagement and virality. YOU ONLY NEED TO WRITE OUT THE TWEET CONTENT, WITHOUT ANY OTHER CONTENT.'''},]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"""You have already completed all the preparatory actions for posting a tweet in a human-like manner. However, there's still room for improvement in the tweet you've crafted. Current tweet: {prompt}. You compete with other news agencies to post tweets that maximize engagement and virality. YOU ONLY NEED TO WRITE OUT THE TWEET CONTENT, WITHOUT ANY OTHER CONTENT.""",
+                        },
+                    ],
+                },
             ]
             response1 = self.client.chat.completions.create(
                 model=model if model else self.model,
@@ -168,16 +207,15 @@ class OpenaiEngine(Engine):
             return answer2
 
 
-
 class OpenaiEngine_MindAct(Engine):
     def __init__(
-            self,
-            api_key=None,
-            stop=["\n\n"],
-            rate_limit=-1,
-            model=None,
-            temperature=0,
-            **kwargs,
+        self,
+        api_key=None,
+        stop=["\n\n"],
+        rate_limit=-1,
+        model=None,
+        temperature=0,
+        **kwargs,
     ) -> None:
         """Init an OpenAI GPT/Codex engine
 
@@ -188,7 +226,7 @@ class OpenaiEngine_MindAct(Engine):
             model (_type_, optional): Model family. Defaults to None.
         """
         assert (
-                os.getenv("OPENAI_API_KEY", api_key) is not None
+            os.getenv("OPENAI_API_KEY", api_key) is not None
         ), "must pass on the api_key or set OPENAI_API_KEY in the environment"
         if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY", api_key)
@@ -216,12 +254,14 @@ class OpenaiEngine_MindAct(Engine):
         backoff.expo,
         (APIError, RateLimitError, APIConnectionError),
     )
-    def generate(self, prompt, max_new_tokens=4096, temperature=0, model=None, **kwargs):
+    def generate(
+        self, prompt, max_new_tokens=4096, temperature=0, model=None, **kwargs
+    ):
         self.current_key_idx = (self.current_key_idx + 1) % len(self.api_keys)
         start_time = time.time()
         if (
-                self.request_interval > 0
-                and start_time < self.next_avil_time[self.current_key_idx]
+            self.request_interval > 0
+            and start_time < self.next_avil_time[self.current_key_idx]
         ):
             time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
 
@@ -230,9 +270,9 @@ class OpenaiEngine_MindAct(Engine):
         if isinstance(prompt, str):
             # Assume one turn dialogue
             user_prompt = [
-                {"role": "user", "content": "This is the tweet:"+prompt},
+                {"role": "user", "content": "This is the tweet:" + prompt},
             ]
-        sys_eval_prompt = '''# Role: Evaluator of Tweet Novelty
+        sys_eval_prompt = """# Role: Evaluator of Tweet Novelty
 
         ## Profile
         - version: 1.0
@@ -271,10 +311,10 @@ class OpenaiEngine_MindAct(Engine):
 
         ## Init
         Evaluate the following tweets for novelty using the provided scale and guidelines. For each tweet, assign a Rating and provide an Explanation.
-        '''
+        """
         prompt_input = [
-                {"role": "system", "content": [{"type": "text", "text": sys_eval_prompt}]},
-                {user_prompt},
+            {"role": "system", "content": [{"type": "text", "text": sys_eval_prompt}]},
+            {user_prompt},
         ]
         response = self.client.chat.completions.create(
             model=model if model else self.model,
@@ -285,8 +325,8 @@ class OpenaiEngine_MindAct(Engine):
         )
         if self.request_interval > 0:
             self.next_avil_time[self.current_key_idx] = (
-                    max(start_time, self.next_avil_time[self.current_key_idx])
-                    + self.request_interval
+                max(start_time, self.next_avil_time[self.current_key_idx])
+                + self.request_interval
             )
 
         answer = [choice.message.content for choice in response.choices][0]

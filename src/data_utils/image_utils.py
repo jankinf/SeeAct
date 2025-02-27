@@ -19,6 +19,7 @@ import torch
 import json
 import copy
 
+
 def convert_elements2detections(candidate_elements):
     """
     Extract element coordinates
@@ -26,7 +27,9 @@ def convert_elements2detections(candidate_elements):
     """
     boxes = []
     for box_id, element in enumerate(candidate_elements):
-        bounding_box_rect = json.loads(element['attributes'])['bounding_box_rect'].strip().split(',')
+        bounding_box_rect = (
+            json.loads(element["attributes"])["bounding_box_rect"].strip().split(",")
+        )
         x1 = float(bounding_box_rect[0])
         y1 = float(bounding_box_rect[1])
         w = float(bounding_box_rect[2])
@@ -36,7 +39,7 @@ def convert_elements2detections(candidate_elements):
     transformer_results = {
         "boxes": torch.tensor(boxes),
         "scores": torch.tensor([0.5 for item in boxes]),
-        "labels": torch.tensor([1 for item in boxes])
+        "labels": torch.tensor([1 for item in boxes]),
     }
     detections = sv.Detections.from_transformers(transformer_results)
     return detections
@@ -45,8 +48,8 @@ def convert_elements2detections(candidate_elements):
 def extract_topk_elements(all_elements, k):
     topk_elements = []
     for element in all_elements:
-        rank = element['rank']
-        score = element['score']
+        rank = element["rank"]
+        score = element["score"]
         if rank < k:
             topk_elements.append(copy.deepcopy(element))
     return topk_elements
@@ -59,14 +62,14 @@ def extract_elements_by_ids(all_elements, ids):
     """
     output = []
     for element in all_elements:
-        element_id = element['backend_node_id']
+        element_id = element["backend_node_id"]
         if element_id in ids:
             output.append(element)
 
     # Order output element to be identical with ids input
     element_dict = {}
     for element in all_elements:
-        element_id = element['backend_node_id']
+        element_id = element["backend_node_id"]
         element_dict[element_id] = element
     ordered_output = []
     for element_id in ids:
@@ -77,35 +80,44 @@ def extract_elements_by_ids(all_elements, ids):
 
 def batch_elements_by_locality(elements, num_choices):
     # Sort elements by y1 location (ascending order)
-    sorted_elements = sorted(elements, key=lambda x: float(
-        json.loads(x['attributes'])['bounding_box_rect'].strip().split(',')[1]))
+    sorted_elements = sorted(
+        elements,
+        key=lambda x: float(
+            json.loads(x["attributes"])["bounding_box_rect"].strip().split(",")[1]
+        ),
+    )
 
     batches = []
     while len(sorted_elements) > 1:
-        batch = sorted_elements[: num_choices]
+        batch = sorted_elements[:num_choices]
         sorted_elements = sorted_elements[num_choices:]
         batches.append(batch)
 
     return batches
 
+
 def batch_elements_by_locality_16_16_17(elements):
     # Sort elements by y1 location (ascending order)
-    sorted_elements = sorted(elements, key=lambda x: float(
-        json.loads(x['attributes'])['bounding_box_rect'].strip().split(',')[1]))
+    sorted_elements = sorted(
+        elements,
+        key=lambda x: float(
+            json.loads(x["attributes"])["bounding_box_rect"].strip().split(",")[1]
+        ),
+    )
 
     batches = []
     # First batch: 16
-    batch = sorted_elements[: 16]
+    batch = sorted_elements[:16]
     sorted_elements = sorted_elements[16:]
     batches.append(batch)
 
     # Second batch: 17
-    batch = sorted_elements[: 17]
+    batch = sorted_elements[:17]
     sorted_elements = sorted_elements[17:]
     batches.append(batch)
 
     # Third batch: 17
-    batch = sorted_elements[: 17]
+    batch = sorted_elements[:17]
     sorted_elements = sorted_elements[17:]
     batches.append(batch)
 
@@ -114,10 +126,17 @@ def batch_elements_by_locality_16_16_17(elements):
 
 def split_elements_by_locality_final_round(elements):
     # Sort elements by y1 location (ascending order)
-    sorted_elements = sorted(elements, key=lambda x: float(
-        json.loads(x['attributes'])['bounding_box_rect'].strip().split(',')[1]))
+    sorted_elements = sorted(
+        elements,
+        key=lambda x: float(
+            json.loads(x["attributes"])["bounding_box_rect"].strip().split(",")[1]
+        ),
+    )
 
-    y1_axis = [float(json.loads(item['attributes'])['bounding_box_rect'].strip().split(',')[1]) for item in sorted_elements]
+    y1_axis = [
+        float(json.loads(item["attributes"])["bounding_box_rect"].strip().split(",")[1])
+        for item in sorted_elements
+    ]
     batches = []
     window_elements = []
     for idx in range(len(y1_axis)):
@@ -126,7 +145,7 @@ def split_elements_by_locality_final_round(elements):
             continue
         else:
             current_y = y1_axis[idx]
-            if current_y - window_elements[-1]<2000:
+            if current_y - window_elements[-1] < 2000:
                 window_elements.append(current_y)
             else:
                 batches.append(window_elements)
@@ -136,7 +155,6 @@ def split_elements_by_locality_final_round(elements):
     cropping_locations = []
     idx = 0
     for item in batches:
-        cropping_locations.append([idx, idx+len(item)])
+        cropping_locations.append([idx, idx + len(item)])
         idx += len(item)
     return cropping_locations
-

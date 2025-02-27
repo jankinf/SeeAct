@@ -14,9 +14,7 @@ prompt_input = [
     {"role": "system", "content": [{"type": "text", "text": system_prompt}]},
     {
         "role": "user",
-        "content": [
-            {"type": "text", "text": "tell me a joke"}
-        ],
+        "content": [{"type": "text", "text": "tell me a joke"}],
     },
 ]
 

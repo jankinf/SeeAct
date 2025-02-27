@@ -24,48 +24,56 @@ from os.path import dirname
 import toml
 from playwright.async_api import async_playwright, Locator
 
-from .data_utils.format_prompt_utils import get_index_from_option_name, generate_new_query_prompt, \
-    generate_new_referring_prompt, format_options, generate_option_name
-from .demo_utils.browser_helper import normal_launch_async, normal_new_context_async, \
-    get_interactive_elements_with_playwright, select_option, saveconfig
+from .data_utils.format_prompt_utils import (
+    get_index_from_option_name,
+    generate_new_query_prompt,
+    generate_new_referring_prompt,
+    format_options,
+    generate_option_name,
+)
+from .demo_utils.browser_helper import (
+    normal_launch_async,
+    normal_new_context_async,
+    get_interactive_elements_with_playwright,
+    select_option,
+    saveconfig,
+)
 from .demo_utils.crawler_helper import get_random_link
-from .demo_utils.format_prompt import format_choices, postprocess_action_lmm, postprocess_action_lmm_pixel
+from .demo_utils.format_prompt import (
+    format_choices,
+    postprocess_action_lmm,
+    postprocess_action_lmm_pixel,
+)
 from .demo_utils.inference_engine import engine_factory
 
 
 class SeeActAgent:
-    def __init__(self,
-                 config_path=None,
-                 save_file_dir="seeact_agent_files",
-                 default_task='Find the pdf of the paper "GPT-4V(ision) is a Generalist Web Agent, if Grounded"',
-                 default_website="https://www.google.com/",
-                 input_info=["screenshot"],
-                 grounding_strategy="text_choice_som",  # [...,'pixel_2_stage']
-                 crawler_mode=False,
-                 crawler_max_steps=10,
-                 max_auto_op=50,
-                 max_continuous_no_op=5,
-                 highlight=False,
-                 headless=False,
-                 args=[],
-                 browser_app="chrome",
-                 persistant=False,
-                 persistant_user_path="",
-                 save_video=False,
-                 viewport={
-                     "width": 1280,
-                     "height": 720
-                 },
-                 tracing=False,
-                 trace={
-                     "screenshots": True,
-                     "snapshots": True,
-                     "sources": True
-                 },
-                 rate_limit=-1,
-                 model="gpt-4o",
-                 temperature=0.9
-                 ):
+    def __init__(
+        self,
+        config_path=None,
+        save_file_dir="seeact_agent_files",
+        default_task='Find the pdf of the paper "GPT-4V(ision) is a Generalist Web Agent, if Grounded"',
+        default_website="https://www.google.com/",
+        input_info=["screenshot"],
+        grounding_strategy="text_choice_som",  # [...,'pixel_2_stage']
+        crawler_mode=False,
+        crawler_max_steps=10,
+        max_auto_op=50,
+        max_continuous_no_op=5,
+        highlight=False,
+        headless=False,
+        args=[],
+        browser_app="chrome",
+        persistant=False,
+        persistant_user_path="",
+        save_video=False,
+        viewport={"width": 1280, "height": 720},
+        tracing=False,
+        trace={"screenshots": True, "snapshots": True, "sources": True},
+        rate_limit=-1,
+        model="gpt-4o",
+        temperature=0.9,
+    ):
 
         try:
             config = {
@@ -81,12 +89,12 @@ class SeeActAgent:
                     "grounding_strategy": grounding_strategy,
                     "max_auto_op": max_auto_op,
                     "max_continuous_no_op": max_continuous_no_op,
-                    "highlight": highlight
+                    "highlight": highlight,
                 },
                 "openai": {
                     "rate_limit": rate_limit,
                     "model": model,
-                    "temperature": temperature
+                    "temperature": temperature,
                 },
                 "browser": {
                     "headless": headless,
@@ -97,18 +105,21 @@ class SeeActAgent:
                     "save_video": save_video,
                     "viewport": viewport,
                     "tracing": tracing,
-                    "trace": trace
-                }
+                    "trace": trace,
+                },
             }
             if config_path is not None:
-                with open(config_path,
-                          'r') as fp:
+                with open(config_path, "r") as fp:
                     print(f"Configuration File Loaded - {config_path}")
                     toml_config = toml.load(fp)
-            
+
             def deep_update(target, update):
                 for key, value in update.items():
-                    if isinstance(value, dict) and key in target and isinstance(target[key], dict):
+                    if (
+                        isinstance(value, dict)
+                        and key in target
+                        and isinstance(target[key], dict)
+                    ):
                         deep_update(target[key], value)
                     else:
                         target[key] = value
@@ -118,35 +129,74 @@ class SeeActAgent:
         except FileNotFoundError:
             print(f"Error: File '{os.path.abspath(config_path)}' not found.")
         except toml.TomlDecodeError:
-            print(f"Error: File '{os.path.abspath(config_path)}' is not a valid TOML file.")
+            print(
+                f"Error: File '{os.path.abspath(config_path)}' is not a valid TOML file."
+            )
 
         self.config = config
         self.complete_flag = False
-        self.session_control = {
-            'active_page': None,
-            'context': None,
-            'browser': None
-        }
+        self.session_control = {"active_page": None, "context": None, "browser": None}
         self.tasks = [self.config["basic"]["default_task"]]
 
-        self.main_path = os.path.join(self.config["basic"]["save_file_dir"], datetime.now().strftime("%Y%m%d_%H%M%S"))
+        self.main_path = os.path.join(
+            self.config["basic"]["save_file_dir"],
+            datetime.now().strftime("%Y%m%d_%H%M%S"),
+        )
         os.makedirs(self.main_path, exist_ok=True)
-        self.action_space = ["CLICK", "PRESS ENTER", "HOVER", "SCROLL UP", "SCROLL DOWN", "NEW TAB", "CLOSE TAB",
-                             "GO BACK", "GO FORWARD",
-                             "TERMINATE", "SELECT", "TYPE", "GOTO", "MEMORIZE"]  # Define the list of actions here
+        self.action_space = [
+            "CLICK",
+            "PRESS ENTER",
+            "HOVER",
+            "SCROLL UP",
+            "SCROLL DOWN",
+            "NEW TAB",
+            "CLOSE TAB",
+            "GO BACK",
+            "GO FORWARD",
+            "TERMINATE",
+            "SELECT",
+            "TYPE",
+            "GOTO",
+            "MEMORIZE",
+        ]  # Define the list of actions here
 
-        self.no_value_op = ["CLICK", "PRESS ENTER", "HOVER", "SCROLL UP", "SCROLL DOWN", "NEW TAB", "CLOSE TAB",
-                            "PRESS HOME", "PRESS END", "PRESS PAGEUP", "PRESS PAGEDOWN"
-                                                                       "GO BACK",
-                            "GO FORWARD",
-                            "TERMINATE", "NONE"]
+        self.no_value_op = [
+            "CLICK",
+            "PRESS ENTER",
+            "HOVER",
+            "SCROLL UP",
+            "SCROLL DOWN",
+            "NEW TAB",
+            "CLOSE TAB",
+            "PRESS HOME",
+            "PRESS END",
+            "PRESS PAGEUP",
+            "PRESS PAGEDOWN" "GO BACK",
+            "GO FORWARD",
+            "TERMINATE",
+            "NONE",
+        ]
 
         self.with_value_op = ["SELECT", "TYPE", "GOTO", "MEMORIZE", "SAY"]
 
-        self.no_element_op = ["PRESS ENTER", "SCROLL UP", "SCROLL DOWN", "NEW TAB", "CLOSE TAB", "GO BACK", "GOTO",
-                              "PRESS HOME", "PRESS END", "PRESS PAGEUP", "PRESS PAGEDOWN",
-                              "GO FORWARD",
-                              "TERMINATE", "NONE", "MEMORIZE", "SAY"]
+        self.no_element_op = [
+            "PRESS ENTER",
+            "SCROLL UP",
+            "SCROLL DOWN",
+            "NEW TAB",
+            "CLOSE TAB",
+            "GO BACK",
+            "GOTO",
+            "PRESS HOME",
+            "PRESS END",
+            "PRESS PAGEUP",
+            "PRESS PAGEDOWN",
+            "GO FORWARD",
+            "TERMINATE",
+            "NONE",
+            "MEMORIZE",
+            "SAY",
+        ]
 
         # Initialize the primary logger and the developer logger
         self.logger = self._setup_logger(redirect_to_dev_log=False)
@@ -156,7 +206,7 @@ class SeeActAgent:
         # for handler in self.logger.handlers:
         #     self.dev_logger.addHandler(handler)
 
-        self.engine = engine_factory(**self.config['openai'])
+        self.engine = engine_factory(**self.config["openai"])
         self.taken_actions = []
 
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
@@ -174,9 +224,8 @@ class SeeActAgent:
         action_format = "ACTION: Choose an action from allowed actions."  # Dynamically generate action_format based on self.action_space
 
         return {
-            "system_prompt": '''You are assisting humans doing web navigation tasks step by step. At each stage, you can see the webpage by a screenshot and know the previous actions before the current step decided by yourself that have been executed for this task through recorded history. You need to decide on the first following action to take.''',
-
-            "action_space": '''
+            "system_prompt": """You are assisting humans doing web navigation tasks step by step. At each stage, you can see the webpage by a screenshot and know the previous actions before the current step decided by yourself that have been executed for this task through recorded history. You need to decide on the first following action to take.""",
+            "action_space": """
 Here are the descriptions of all allowed actions:
 
 No Value Operations:
@@ -202,9 +251,8 @@ With Value Operations:
 - GOTO: Navigate to a specific URL. The value is the URL to navigate to.
 - SAY: Output answers or other information you want to tell the user.
 - MEMORIZE: Keep some content into action history to memorize it.
-''',
-
-            "question_description": '''The screenshot below shows the webpage you see. Think step by step before outlining the next action step at the current stage. Clearly outline which element in the webpage users will operate with as the first next target element, its detailed location, and the corresponding operation.
+""",
+            "question_description": """The screenshot below shows the webpage you see. Think step by step before outlining the next action step at the current stage. Clearly outline which element in the webpage users will operate with as the first next target element, its detailed location, and the corresponding operation.
 
 To be successful, it is important to follow the following rules: 
 1. You should only issue a valid action given the current observation. 
@@ -219,33 +267,28 @@ To be successful, it is important to follow the following rules:
 10. After typing text into search or text input area, the next action is normally PRESS ENTER
 11. When there are bouding boxes in the screenshot, interact with the elements in the bounding boxes
 12. When there are multiple clickable buttons having the same value, choose the one with less obstacles in the screenshot.
-''',
-
+""",
             "referring_description": """(Reiteration)
 First, reiterate your next target element, its detailed location, and the corresponding operation.
 
 (Multichoice Question)
 Below is a multi-choice question, where the choices are elements in the webpage. All elements are arranged in the order based on their height on the webpage, from top to bottom (and from left to right). This arrangement in addition to the normalized coordinates can be used to locate them. From the screenshot, find out where and what each one is on the webpage, taking into account both their text content and HTML details. Then, determine whether one matches your target element if your action involves an element. Please examine the choices one by one. Choose the matching one. If multiple options match your answer, choose the most likely one by re-examining the screenshot, the choices, and your further reasoning.""",
-
-            "element_format": '''(Final Answer)
+            "element_format": """(Final Answer)
 Finally, conclude your answer using the format below. Ensure your answer is strictly adhering to the format provided below. Please do not leave any explanation in your answers of the final standardized format part, and this final part should be clear and certain. The element choice, action, and value should be in three separate lines.
 
 Format:
 
-ELEMENT: The uppercase letter of your choice.''',
-
+ELEMENT: The uppercase letter of your choice.""",
             "action_format": action_format,  # Use the dynamically generated action_format
-
-            "value_format": '''VALUE: Provide additional input based on ACTION. (If it doesn't involve a value, write "None"'''
+            "value_format": '''VALUE: Provide additional input based on ACTION. (If it doesn't involve a value, write "None"''',
         }
 
     def _initialize_prompts_pure_vision(self):
         """Specifically for Vision-only agents"""
 
         return {
-            "system_prompt": '''You are assisting humans doing web navigation tasks step by step. At each stage, you can see the webpage by a screenshot and know the previous actions before the current step decided by yourself that have been executed for this task through recorded history. You need to decide on the first following action to take.''',
-
-            "question_description": '''
+            "system_prompt": """You are assisting humans doing web navigation tasks step by step. At each stage, you can see the webpage by a screenshot and know the previous actions before the current step decided by yourself that have been executed for this task through recorded history. You need to decide on the first following action to take.""",
+            "question_description": """
     The screenshot below shows the webpage you see. Think step by step before outlining the next action step at the current stage. Clearly outline which element in the webpage users will operate with as the first next target element, its detailed location, and the corresponding operation.
 
 To be successful, it is important to follow the following rules: 
@@ -297,24 +340,29 @@ To be successful, it is important to follow the following rules:
                 
     VALUE: Provide additional input based on ACTION. (If it doesn't involve a value, write "None"            
                 
-    '''}
+    """,
+        }
 
     def update_action_space(self, new_actions):
         """Update the action space and regenerate the action_format prompt."""
-        if isinstance(new_actions, list) and all(isinstance(item, str) for item in new_actions):
+        if isinstance(new_actions, list) and all(
+            isinstance(item, str) for item in new_actions
+        ):
             self.action_space = new_actions
-            self.prompts["action_format"] = f"ACTION: Choose an action from {{{', '.join(self.action_space)}}}."
+            self.prompts["action_format"] = (
+                f"ACTION: Choose an action from {{{', '.join(self.action_space)}}}."
+            )
         else:
             print("Invalid action space provided. It must be a list of strings.")
 
     def _setup_logger(self, redirect_to_dev_log=False):
         """Set up a logger to log to both file and console within the main_path."""
-        logger_name = 'SeeActAgent'
+        logger_name = "SeeActAgent"
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.INFO)
         if not logger.handlers:  # Avoid adding handlers multiple times
             # Create a file handler for writing logs to a file
-            log_filename = 'agent.log'
+            log_filename = "agent.log"
             f_handler = logging.FileHandler(os.path.join(self.main_path, log_filename))
             f_handler.setLevel(logging.INFO)
 
@@ -323,8 +371,8 @@ To be successful, it is important to follow the following rules:
             c_handler.setLevel(logging.INFO)
 
             # Create formatters for file and console handlers
-            file_formatter = logging.Formatter('%(asctime)s - %(message)s')
-            console_formatter = logging.Formatter('%(message)s')
+            file_formatter = logging.Formatter("%(asctime)s - %(message)s")
+            console_formatter = logging.Formatter("%(message)s")
 
             # Set formatters for file and console handlers
             f_handler.setFormatter(file_formatter)
@@ -332,27 +380,32 @@ To be successful, it is important to follow the following rules:
 
             # Add the handlers to the logger
             logger.addHandler(f_handler)
-            if not redirect_to_dev_log:  # Only add console handler if not redirecting to dev log
+            if (
+                not redirect_to_dev_log
+            ):  # Only add console handler if not redirecting to dev log
                 logger.addHandler(c_handler)
 
         return logger
 
     async def page_on_close_handler(self):
         # Corrected to use 'self' for accessing class attributes
-        if self.session_control['context']:
+        if self.session_control["context"]:
             try:
                 await self.page.title()
             except:
                 self.logger.info(
-                    "The active tab was closed. Will switch to the last page (or open a new default google page)")
-                if self.session_control['context'].pages:
-                    self.page = self.session_control['context'].pages[-1]
+                    "The active tab was closed. Will switch to the last page (or open a new default google page)"
+                )
+                if self.session_control["context"].pages:
+                    self.page = self.session_control["context"].pages[-1]
                     await self.page.bring_to_front()
                     self.logger.info(f"Switched the active tab to: {self.page.url}")
                 else:
-                    self.page = await self.session_control['context'].new_page()
+                    self.page = await self.session_control["context"].new_page()
                     try:
-                        await self.page.goto("https://www.google.com/", wait_until="load")
+                        await self.page.goto(
+                            "https://www.google.com/", wait_until="load"
+                        )
                     except Exception as e:
                         self.logger.info(f"Failed to navigate to Google: {e}")
                     self.logger.info(f"Switched the active tab to: {self.page.url}")
@@ -360,9 +413,9 @@ To be successful, it is important to follow the following rules:
     def save_action_history(self, filename="action_history.txt"):
         """Save the history of taken actions to a file in the main path."""
         history_path = os.path.join(self.main_path, filename)
-        with open(history_path, 'w') as f:
+        with open(history_path, "w") as f:
             for action in self.taken_actions:
-                f.write(action + '\n')
+                f.write(action + "\n")
         self.logger.info(f"Action history saved to: {history_path}")
 
     async def page_on_navigation_handler(self, frame):
@@ -386,37 +439,44 @@ To be successful, it is important to follow the following rules:
             if self.config["agent"]["grounding_strategy"] == "text_choice_som":
                 with open(os.path.join(dirname(__file__), "mark_page.js")) as f:
                     mark_page_script = f.read()
-                await self.session_control['active_page'].evaluate(mark_page_script)
+                await self.session_control["active_page"].evaluate(mark_page_script)
         except Exception:
             pass
 
     async def start(self, headless=None, args=None, website=None):
         self.playwright = await async_playwright().start()
-        self.session_control['browser'] = await normal_launch_async(self.playwright,
-                                                                    headless=self.config['browser'][
-                                                                        'headless'] if headless is None else headless,
-                                                                    args=self.config['browser'][
-                                                                        'args'] if args is None else args)
-        self.session_control['context'] = await normal_new_context_async(self.session_control['browser'],
-                                                                         viewport=self.config['browser'][
-                                                                             'viewport'])
+        self.session_control["browser"] = await normal_launch_async(
+            self.playwright,
+            headless=(
+                self.config["browser"]["headless"] if headless is None else headless
+            ),
+            args=self.config["browser"]["args"] if args is None else args,
+        )
+        self.session_control["context"] = await normal_new_context_async(
+            self.session_control["browser"], viewport=self.config["browser"]["viewport"]
+        )
 
-        self.session_control['context'].on("page", self.page_on_open_handler)
-        
-        with open(self.config['browser']['cookie_file'], 'r') as f:
+        self.session_control["context"].on("page", self.page_on_open_handler)
+
+        with open(self.config["browser"]["cookie_file"], "r") as f:
             cookies = json.load(f)
-            await self.session_control['context'].add_cookies(cookies)
+            await self.session_control["context"].add_cookies(cookies)
 
-        await self.session_control['context'].new_page()
+        await self.session_control["context"].new_page()
 
         if self.config["basic"]["crawler_mode"] is True:
-            await self.session_control['context'].tracing.start(screenshots=True, snapshots=True)
+            await self.session_control["context"].tracing.start(
+                screenshots=True, snapshots=True
+            )
 
         try:
             await self.page.goto(
-                self.config['basic']['default_website'] if website is None else website,
-                wait_until="load")
-            self.logger.info(f"Loaded website: {self.config['basic']['default_website']}")
+                self.config["basic"]["default_website"] if website is None else website,
+                wait_until="load",
+            )
+            self.logger.info(
+                f"Loaded website: {self.config['basic']['default_website']}"
+            )
         except Exception as e:
             self.logger.info("Failed to fully load the webpage before timeout")
             self.logger.info(e)
@@ -433,7 +493,6 @@ To be successful, it is important to follow the following rules:
             return False
 
     def generate_prompt(self, task=None, previous=None, choices=None):
-
         """Generate a prompt based on the current task, previous actions, and choices."""
         # assert task is not None, "Please input the task."
 
@@ -443,9 +502,13 @@ To be successful, it is important to follow the following rules:
             question_description_input = self.prompts["question_description"]
             previous_ = self.taken_actions if self.taken_actions else None
             prompt_list.extend(
-                generate_new_query_prompt(system_prompt=system_prompt_input,
-                                          task=self.tasks[-1], previous_actions=previous_,
-                                          question_description=question_description_input))
+                generate_new_query_prompt(
+                    system_prompt=system_prompt_input,
+                    task=self.tasks[-1],
+                    previous_actions=previous_,
+                    question_description=question_description_input,
+                )
+            )
             return prompt_list
         else:
 
@@ -464,35 +527,52 @@ To be successful, it is important to follow the following rules:
             # print(previous_)
 
             prompt_list.extend(
-                generate_new_query_prompt(system_prompt=system_prompt_input + "\n" + action_space_input,
-                                          task=self.tasks[-1], previous_actions=previous_,
-                                          question_description=question_description_input))
+                generate_new_query_prompt(
+                    system_prompt=system_prompt_input + "\n" + action_space_input,
+                    task=self.tasks[-1],
+                    previous_actions=previous_,
+                    question_description=question_description_input,
+                )
+            )
             prompt_list.append(
-                generate_new_referring_prompt(referring_description=referring_input,
-                                              element_format=element_format_input,
-                                              action_format=action_format_input, value_format=value_format_input,
-                                              choices=choices))
+                generate_new_referring_prompt(
+                    referring_description=referring_input,
+                    element_format=element_format_input,
+                    action_format=action_format_input,
+                    value_format=value_format_input,
+                    choices=choices,
+                )
+            )
 
             return prompt_list
 
-    async def perform_action(self, target_element=None, action_name=None, value=None, target_coordinates=None,
-                             element_repr=None):
+    async def perform_action(
+        self,
+        target_element=None,
+        action_name=None,
+        value=None,
+        target_coordinates=None,
+        element_repr=None,
+    ):
 
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
             selector = "pixel_coordinates"
         if target_element is not None:
-            selector = target_element['selector']
-            element_repr = target_element['description']
+            selector = target_element["selector"]
+            element_repr = target_element["description"]
         else:
             selector = None
-
 
         page = self.page
 
         if action_name == "CLICK" and selector:
             if selector == "pixel_coordinates":
                 delay = random.randint(50, 150)
-                await self.page.mouse.click(round(target_coordinates["x"]), round(target_coordinates["y"]), delay=delay)
+                await self.page.mouse.click(
+                    round(target_coordinates["x"]),
+                    round(target_coordinates["y"]),
+                    delay=delay,
+                )
             else:
                 await selector.click(timeout=2000)
                 self.logger.info(f"Clicked on element: {element_repr}")
@@ -500,18 +580,24 @@ To be successful, it is important to follow the following rules:
 
             if selector == "pixel_coordinates":
                 delay = random.randint(50, 150)
-                await self.page.mouse.hover(round(target_coordinates["x"]), round(target_coordinates["y"]), delay=delay)
+                await self.page.mouse.hover(
+                    round(target_coordinates["x"]),
+                    round(target_coordinates["y"]),
+                    delay=delay,
+                )
             else:
                 await selector.hover(timeout=2000)
                 self.logger.info(f"Hovered over element: {element_repr}")
-
-
 
         elif action_name == "TYPE" and selector:
 
             if selector == "pixel_coordinates":
                 delay = random.randint(50, 150)
-                await self.page.mouse.click(round(target_coordinates["x"]), round(target_coordinates["y"]), delay=delay)
+                await self.page.mouse.click(
+                    round(target_coordinates["x"]),
+                    round(target_coordinates["y"]),
+                    delay=delay,
+                )
 
                 await self.page.keyboard.press("Control+A")
                 await self.page.keyboard.press("Backspace")
@@ -523,25 +609,29 @@ To be successful, it is important to follow the following rules:
                 self.logger.info(f"Typed '{value}' into element: {element_repr}")
 
         elif action_name == "SCROLL UP":
-            await page.evaluate(f"window.scrollBy(0, -{self.config['browser']['viewport']['height'] // 2});")
+            await page.evaluate(
+                f"window.scrollBy(0, -{self.config['browser']['viewport']['height'] // 2});"
+            )
             self.logger.info("Scrolled up")
         elif action_name == "SCROLL DOWN":
-            await page.evaluate(f"window.scrollBy(0, {self.config['browser']['viewport']['height'] // 2});")
+            await page.evaluate(
+                f"window.scrollBy(0, {self.config['browser']['viewport']['height'] // 2});"
+            )
             self.logger.info("Scrolled down")
         elif action_name == "PRESS HOME":
-            await page.keyboard.press('Home')
+            await page.keyboard.press("Home")
             self.logger.info("Pressed Home key")
         elif action_name == "PRESS END":
-            await page.keyboard.press('End')
+            await page.keyboard.press("End")
             self.logger.info("Pressed End key")
         elif action_name == "PRESS PAGEUP":
-            await page.keyboard.press('PageUp')
+            await page.keyboard.press("PageUp")
             self.logger.info("Pressed PageUp key")
         elif action_name == "PRESS PAGEDOWN":
-            await page.keyboard.press('PageDown')
+            await page.keyboard.press("PageDown")
             self.logger.info("Pressed PageDown key")
         elif action_name == "NEW TAB":
-            new_page = await self.session_control['context'].new_page()
+            new_page = await self.session_control["context"].new_page()
             # self.session_control['pages'].append(new_page)
             self.logger.info("Opened a new tab")
         elif action_name == "CLOSE TAB":
@@ -559,11 +649,15 @@ To be successful, it is important to follow the following rules:
         elif action_name == "PRESS ENTER" and selector:
             if selector == "pixel_coordinates":
                 delay = random.randint(50, 150)
-                await self.page.mouse.click(round(target_coordinates["x"]), round(target_coordinates["y"]), delay=delay)
-            await selector.press('Enter')
+                await self.page.mouse.click(
+                    round(target_coordinates["x"]),
+                    round(target_coordinates["y"]),
+                    delay=delay,
+                )
+            await selector.press("Enter")
             self.logger.info(f"Pressed Enter on element: {element_repr}")
         elif action_name == "PRESS ENTER":
-            await page.keyboard.press('Enter')
+            await page.keyboard.press("Enter")
             self.logger.info(f"Pressed Enter on element: {element_repr}")
         elif action_name == "SELECT" and selector:
             await select_option(selector, value)
@@ -578,15 +672,17 @@ To be successful, it is important to follow the following rules:
         elif action_name in ["MEMORIZE"]:
             self.logger.info(f"Keep {value} to the action history.")
         else:
-            raise Exception(f"Unsupported or improperly specified action: {action_name}")
+            raise Exception(
+                f"Unsupported or improperly specified action: {action_name}"
+            )
         if action_name in self.no_element_op and target_element is None:
             new_action = action_name
         else:
             if selector == "pixel_coordinates":
                 new_action = element_repr + " -> " + action_name
             else:
-                new_action = "[" + target_element['tag_with_role'] + "]" + " "
-                new_action += target_element['description'] + " -> " + action_name
+                new_action = "[" + target_element["tag_with_role"] + "]" + " "
+                new_action += target_element["description"] + " -> " + action_name
         if action_name in self.with_value_op:
             new_action += ": " + value
 
@@ -594,7 +690,6 @@ To be successful, it is important to follow the following rules:
         return new_action
 
     async def predict(self):
-
         """
         Generate a prediction for the next action based on the webpage elements and previous actions.
         """
@@ -602,26 +697,31 @@ To be successful, it is important to follow the following rules:
         self.time_step += 1
 
         try:
-            await self.session_control["active_page"].wait_for_load_state('load')
+            await self.session_control["active_page"].wait_for_load_state("load")
         except Exception:
             pass
 
-        elements = await get_interactive_elements_with_playwright(self.page,
-                                                                  self.config['browser']['viewport'])
+        elements = await get_interactive_elements_with_playwright(
+            self.page, self.config["browser"]["viewport"]
+        )
 
-        '''
+        """
              0: center_point =(x,y)
              1: description
              2: tag_with_role: tag_head with role and type # TODO: Consider adding more
              3. box
              4. selector
              5. tag
-             '''
+             """
 
-        elements = sorted(elements, key=lambda el: (
-            el["center_point"][1], el["center_point"][0]))  # Sorting by y and then x coordinate
+        elements = sorted(
+            elements, key=lambda el: (el["center_point"][1], el["center_point"][0])
+        )  # Sorting by y and then x coordinate
 
-        elements = [{**x, "idx": i, "option": generate_option_name(i)} for i, x in enumerate(elements)]
+        elements = [
+            {**x, "idx": i, "option": generate_option_name(i)}
+            for i, x in enumerate(elements)
+        ]
 
         # In crawler mode, get random link and click on it
         if self.config["basic"]["crawler_mode"] is True:
@@ -630,16 +730,20 @@ To be successful, it is important to follow the following rules:
                 self.complete_flag = True
                 return None
 
-            links = [x for x in elements if x['tag_with_role'] == 'a']
+            links = [x for x in elements if x["tag_with_role"] == "a"]
             random_link = get_random_link(links)
             while random_link in self.visited_links and len(links) > 0:
                 random_link = get_random_link(links)
             if random_link is None:
                 return None
 
-            prediction = {"action_generation": "Random chosen link", "action_grounding": "Random chosen link",
-                          "element": random_link,
-                          "action": "CLICK", "value": 'None'}
+            prediction = {
+                "action_generation": "Random chosen link",
+                "action_grounding": "Random chosen link",
+                "element": random_link,
+                "action": "CLICK",
+                "value": "None",
+            }
             self.predictions.append(prediction)
             self.visited_links.append(random_link)
             self.logger.info(prediction)
@@ -653,9 +757,12 @@ To be successful, it is important to follow the following rules:
                     mark_page_script = f.read()
                 await self.page.evaluate(mark_page_script)
                 await self.page.evaluate("unmarkPage()")
-                await self.page.evaluate("""elements => {
+                await self.page.evaluate(
+                    """elements => {
                     return window.som.drawBoxes(elements);
-                    }""", elements)
+                    }""",
+                    elements,
+                )
         except Exception as e:
             self.logger.info(f"Mark page script error {e}")
 
@@ -666,13 +773,17 @@ To be successful, it is important to follow the following rules:
         options = format_options(choices)
 
         # print("\n\n",choices)
-        prompt = self.generate_prompt(task=self.tasks[-1], previous=self.taken_actions, choices=choices)
+        prompt = self.generate_prompt(
+            task=self.tasks[-1], previous=self.taken_actions, choices=choices
+        )
         # print("\n\n",prompt)
 
         # Logging prompt for debugging
 
         # Capture a screenshot for the current state of the webpage, if required by the model
-        screenshot_path = os.path.join(self.main_path, 'screenshots', f'screen_{self.time_step}.png')
+        screenshot_path = os.path.join(
+            self.main_path, "screenshots", f"screen_{self.time_step}.png"
+        )
         self.logger.info(screenshot_path)
         try:
             await self.page.screenshot(path=screenshot_path)
@@ -680,20 +791,29 @@ To be successful, it is important to follow the following rules:
             self.logger.info(f"Failed to take screenshot: {e}")
 
         terminal_width = 10
-        self.logger.info(f"Step - {self.time_step}\n{'-' * terminal_width}\nAction Generation ➡️")
+        self.logger.info(
+            f"Step - {self.time_step}\n{'-' * terminal_width}\nAction Generation ➡️"
+        )
         # for prompt_part in prompt:
         self.logger.info("TASK: " + self.tasks[-1])
         self.logger.info("Previous:")
         for action in self.taken_actions:
             self.logger.info(action)
 
-        output0 = self.engine.generate(prompt=prompt, image_path=self.screenshot_path, turn_number=0, custom_llm_provider="custom_openai", api_key=os.getenv("OPENAI_API_KEY"), api_base=os.getenv("OPENAI_API_BASE"))
+        output0 = self.engine.generate(
+            prompt=prompt,
+            image_path=self.screenshot_path,
+            turn_number=0,
+            custom_llm_provider="custom_openai",
+            api_key=os.getenv("OPENAI_API_KEY"),
+            api_base=os.getenv("OPENAI_API_BASE"),
+        )
 
         terminal_width = 10
         self.logger.info("-" * terminal_width)
         self.logger.info("🤖 Action Generation Output 🤖")
 
-        for line in output0.split('\n'):
+        for line in output0.split("\n"):
             self.logger.info(line)
 
         terminal_width = 10
@@ -701,12 +821,14 @@ To be successful, it is important to follow the following rules:
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
 
             choice_text = "Action Grounding ➡️" + "\n" + options
-            for line in choice_text.split('\n'):
+            for line in choice_text.split("\n"):
                 self.logger.info(line)
 
             output = output0
 
-            pred_element_label, pred_action, pred_value = postprocess_action_lmm_pixel(output)
+            pred_element_label, pred_action, pred_value = postprocess_action_lmm_pixel(
+                output
+            )
 
             pred_element = pred_element_label
             # Log the prediction result
@@ -718,21 +840,34 @@ To be successful, it is important to follow the following rules:
             # Call a GUI visual grounding model to get the pixel coordinates. For example, UGround, CogAgent, SeeClick.
             pred_coordinates = None
 
-            prediction = {"action_generation": output0, "action_grounding": output, "element": None,
-                          "action": pred_action, "value": pred_value, "coordinates": pred_coordinates,
-                          "description": pred_element_label}
+            prediction = {
+                "action_generation": output0,
+                "action_grounding": output,
+                "element": None,
+                "action": pred_action,
+                "value": pred_value,
+                "coordinates": pred_coordinates,
+                "description": pred_element_label,
+            }
 
         else:
             choice_text = "Action Grounding ➡️" + "\n" + options
             choice_text = choice_text.replace("\n\n", "")
 
-            for line in choice_text.split('\n'):
+            for line in choice_text.split("\n"):
                 self.logger.info(line)
 
-            output = self.engine.generate(prompt=prompt, image_path=self.screenshot_path, turn_number=1,
-                                          ouput_0=output0, custom_llm_provider="custom_openai", api_key=os.getenv("OPENAI_API_KEY"), api_base=os.getenv("OPENAI_API_BASE"))
+            output = self.engine.generate(
+                prompt=prompt,
+                image_path=self.screenshot_path,
+                turn_number=1,
+                ouput_0=output0,
+                custom_llm_provider="custom_openai",
+                api_key=os.getenv("OPENAI_API_KEY"),
+                api_base=os.getenv("OPENAI_API_BASE"),
+            )
             self.logger.info("🤖 Action Grounding Output 🤖")
-            for line in output.split('\n'):
+            for line in output.split("\n"):
                 self.logger.info(line)
 
             pred_element_label, pred_action, pred_value = postprocess_action_lmm(output)
@@ -751,8 +886,13 @@ To be successful, it is important to follow the following rules:
             self.logger.debug(f"Action: {pred_action}")
             self.logger.debug(f"Value: {pred_value}")
 
-            prediction = {"action_generation": output0, "action_grounding": output, "element": pred_element,
-                          "action": pred_action, "value": pred_value}
+            prediction = {
+                "action_generation": output0,
+                "action_grounding": output,
+                "element": pred_element,
+                "action": pred_action,
+                "value": pred_value,
+            }
 
         self.predictions.append(prediction)
 
@@ -783,9 +923,9 @@ To be successful, it is important to follow the following rules:
         pred_action = prediction_dict["action"]
         pred_value = prediction_dict["value"]
         pred_coordinate = None
-        pred_element_description=None
+        pred_element_description = None
         if "description" in prediction_dict:
-            pred_element_description=prediction_dict["description"]
+            pred_element_description = prediction_dict["description"]
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
             pred_coordinate = prediction_dict["coordinates"]
 
@@ -795,7 +935,13 @@ To be successful, it is important to follow the following rules:
                 self.logger.info("DEBUG: WHAT IS PRED ACTION???:" + pred_action)
                 # self.dev_logger.info("DEBUG WHAT IS self.no_element_op???:"+ self.no_element_op)
                 pred_action = "NONE"
-            new_action = await self.perform_action(pred_element, pred_action, pred_value, pred_coordinate,pred_element_description)
+            new_action = await self.perform_action(
+                pred_element,
+                pred_action,
+                pred_value,
+                pred_coordinate,
+                pred_element_description,
+            )
             self.taken_actions.append(new_action)
             if pred_action != "NONE":
                 self.valid_op += 1
@@ -815,7 +961,9 @@ To be successful, it is important to follow the following rules:
             error_message = f"Error executing action {pred_action}: {str(e)}"
             print(traceback_info)
             # exit()
-            error_message_with_traceback = f"{error_message}\n\nTraceback:\n{traceback_info}"
+            error_message_with_traceback = (
+                f"{error_message}\n\nTraceback:\n{traceback_info}"
+            )
 
             self.logger.info(new_action)
             self.taken_actions.append(new_action)
@@ -825,32 +973,42 @@ To be successful, it is important to follow the following rules:
     async def stop(self):
 
         try:
-            close_context = self.session_control['context']
-            self.session_control['context'] = None
+            close_context = self.session_control["context"]
+            self.session_control["context"] = None
             await close_context.close()
             self.logger.info("Browser context closed.")
         except Exception as e:
             self.logger.info(e)
 
-        final_json = {"task": self.tasks, "website": self.config["basic"]["default_website"],
-                      "num_step": len(self.taken_actions), "action_history": self.taken_actions}
+        final_json = {
+            "task": self.tasks,
+            "website": self.config["basic"]["default_website"],
+            "num_step": len(self.taken_actions),
+            "action_history": self.taken_actions,
+        }
 
         def locator_serializer(obj):
             """Convert non-serializable objects to a serializable format."""
             if isinstance(obj, Locator):
                 # Assuming Locator has attributes 'frame' and 'selector' you want to serialize
                 return str(obj)
-            raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+            raise TypeError(
+                f"Object of type {obj.__class__.__name__} is not JSON serializable"
+            )
 
         # Using the custom default function in json.dump
-        with open(os.path.join(self.main_path, 'all_predictions.json'), 'w', encoding='utf-8') as f:
+        with open(
+            os.path.join(self.main_path, "all_predictions.json"), "w", encoding="utf-8"
+        ) as f:
             json.dump(self.predictions, f, default=locator_serializer, indent=4)
 
-        with open(os.path.join(self.main_path, 'result.json'), 'w', encoding='utf-8') as file:
+        with open(
+            os.path.join(self.main_path, "result.json"), "w", encoding="utf-8"
+        ) as file:
             json.dump(final_json, file, indent=4)
         self.logger.info("Agent stopped.")
 
-        saveconfig(self.config, os.path.join(self.main_path, 'config.toml'))
+        saveconfig(self.config, os.path.join(self.main_path, "config.toml"))
 
     def clear_action_history(self):
         """
@@ -877,7 +1035,9 @@ To be successful, it is important to follow the following rules:
             if clear_history:
                 self.clear_action_history()
             else:
-                self.taken_actions.append(f"Changed task from {self.tasks[-2]} to: {new_task}")
+                self.taken_actions.append(
+                    f"Changed task from {self.tasks[-2]} to: {new_task}"
+                )
 
         else:
             self.logger.info("Invalid new task. It must be a non-empty string.")
@@ -895,31 +1055,30 @@ To be successful, it is important to follow the following rules:
             self.logger.info(f"Failed to take screenshot: {e}")
 
     async def start_playwright_tracing(self):
-        await self.session_control['context'].tracing.start_chunk(
-            title=f'Step-{self.time_step}',
-            name=f"{self.time_step}"
+        await self.session_control["context"].tracing.start_chunk(
+            title=f"Step-{self.time_step}", name=f"{self.time_step}"
         )
 
     async def stop_playwright_tracing(self):
-        await self.session_control['context'].tracing.stop_chunk(path=self.trace_path)
+        await self.session_control["context"].tracing.stop_chunk(path=self.trace_path)
 
     async def save_traces(self):
         # Capture the DOM tree
         dom_tree = await self.page.evaluate("document.documentElement.outerHTML")
-        os.makedirs(os.path.join(self.main_path, 'dom'), exist_ok=True)
-        with open(self.dom_tree_path, 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.join(self.main_path, "dom"), exist_ok=True)
+        with open(self.dom_tree_path, "w", encoding="utf-8") as f:
             f.write(dom_tree)
 
         # Capture the Accessibility Tree
         accessibility_tree = await self.page.accessibility.snapshot()
-        os.makedirs(os.path.join(self.main_path, 'accessibility'), exist_ok=True)
-        with open(self.accessibility_tree_path, 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.join(self.main_path, "accessibility"), exist_ok=True)
+        with open(self.accessibility_tree_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(accessibility_tree, indent=4))
 
     @property
     def page(self):
         if self._page is None:
-            self._page = self.session_control['active_page']
+            self._page = self.session_control["active_page"]
         return self._page
 
     @page.setter
@@ -928,16 +1087,20 @@ To be successful, it is important to follow the following rules:
 
     @property
     def screenshot_path(self):
-        return os.path.join(self.main_path, 'screenshots', f'screen_{self.time_step}.png')
+        return os.path.join(
+            self.main_path, "screenshots", f"screen_{self.time_step}.png"
+        )
 
     @property
     def trace_path(self):
-        return os.path.join(self.main_path, 'playwright_traces', f'{self.time_step}.zip')
+        return os.path.join(
+            self.main_path, "playwright_traces", f"{self.time_step}.zip"
+        )
 
     @property
     def dom_tree_path(self):
-        return os.path.join(self.main_path, 'dom', f'{self.time_step}.html')
+        return os.path.join(self.main_path, "dom", f"{self.time_step}.html")
 
     @property
     def accessibility_tree_path(self):
-        return os.path.join(self.main_path, 'accessibility', f'{self.time_step}.json')
+        return os.path.join(self.main_path, "accessibility", f"{self.time_step}.json")

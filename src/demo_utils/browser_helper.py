@@ -120,8 +120,7 @@ ignore_args = [
 ]
 
 
-
-async def normal_launch_async(playwright: Playwright,trace_dir=None):
+async def normal_launch_async(playwright: Playwright, trace_dir=None):
     browser = await playwright.chromium.launch(
         traces_dir=None,
         headless=True,
@@ -137,27 +136,28 @@ async def normal_launch_async(playwright: Playwright,trace_dir=None):
 def normal_launch(playwright: Playwright):
     browser = playwright.chromium.launch(
         headless=False,
-        args=['--incognito',
-              "--disable-blink-features=AutomationControlled",
-              ],
+        args=[
+            "--incognito",
+            "--disable-blink-features=AutomationControlled",
+        ],
         ignore_default_args=ignore_args,
     )
     return browser
 
 
 async def normal_new_context_async(
-        browser,
-        storage_state=None,
-        har_path=None,
-        video_path=None,
-        tracing=False,
-        trace_screenshots=False,
-        trace_snapshots=False,
-        trace_sources=False,
-        locale=None,
-        geolocation=None,
-        user_agent: str = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-        viewport: dict = {"width": 1280, "height": 720},
+    browser,
+    storage_state=None,
+    har_path=None,
+    video_path=None,
+    tracing=False,
+    trace_screenshots=False,
+    trace_snapshots=False,
+    trace_sources=False,
+    locale=None,
+    geolocation=None,
+    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+    viewport: dict = {"width": 1280, "height": 720},
 ):
     city = random.choice(list_us_cities)
     context = await browser.new_context(
@@ -171,15 +171,19 @@ async def normal_new_context_async(
     )
 
     if tracing:
-        await context.tracing.start(screenshots=trace_screenshots, snapshots=trace_snapshots, sources=trace_sources)
+        await context.tracing.start(
+            screenshots=trace_screenshots,
+            snapshots=trace_snapshots,
+            sources=trace_sources,
+        )
     return context
 
 
 def normal_new_context(
-        browser,
-        storage_state=None,
-        user_agent: str = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-        viewport: dict = {"width": 1280, "height": 720},
+    browser,
+    storage_state=None,
+    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+    viewport: dict = {"width": 1280, "height": 720},
 ):
     return browser.new_context(
         storage_state=storage_state,
@@ -192,22 +196,25 @@ def persistent_launch(playwright: Playwright, user_data_dir: str = ""):
     context = playwright.chromium.launch_persistent_context(
         user_data_dir=user_data_dir,
         headless=False,
-        args=["--no-default-browser-check",
-              "--no_sandbox",
-              "--disable-blink-features=AutomationControlled",
-              ],
+        args=[
+            "--no-default-browser-check",
+            "--no_sandbox",
+            "--disable-blink-features=AutomationControlled",
+        ],
         ignore_default_args=ignore_args,
         user_agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
         viewport={"width": 1280, "height": 720},
         bypass_csp=True,
         slow_mo=1000,
         chromium_sandbox=True,
-        channel="chrome-dev"
+        channel="chrome-dev",
     )
     return context
 
 
-async def persistent_launch_async(playwright: Playwright, user_data_dir: str = "", record_video_dir="video"):
+async def persistent_launch_async(
+    playwright: Playwright, user_data_dir: str = "", record_video_dir="video"
+):
     context = await playwright.chromium.launch_persistent_context(
         user_data_dir=user_data_dir,
         headless=False,
@@ -218,7 +225,7 @@ async def persistent_launch_async(playwright: Playwright, user_data_dir: str = "
         user_agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
         # viewport={"width": 1280, "height": 720},
         record_video_dir=record_video_dir,
-        channel="chrome-dev"
+        channel="chrome-dev",
         # slow_mo=1000,
     )
     return context
@@ -272,23 +279,24 @@ async def connect_via_cdp_async(playwright: Playwright, user_data_dir: str = "")
 
 def remove_extra_eol(text):
     # Replace EOL symbols
-    text = text.replace('\n', ' ')
-    return re.sub(r'\s{2,}', ' ', text)
+    text = text.replace("\n", " ")
+    return re.sub(r"\s{2,}", " ", text)
 
 
 def get_first_line(s):
-    first_line = s.split('\n')[0]
+    first_line = s.split("\n")[0]
     tokens = first_line.split()
     if len(tokens) > 8:
-        return ' '.join(tokens[:8]) + '...'
+        return " ".join(tokens[:8]) + "..."
     else:
         return first_line
 
+
 async def get_element_description(element, tag_name, role_value, type_value):
-    '''
-         Asynchronously generates a descriptive text for a web element based on its tag type.
-         Handles various HTML elements like 'select', 'input', and 'textarea', extracting attributes and content relevant to accessibility and interaction.
-    '''
+    """
+    Asynchronously generates a descriptive text for a web element based on its tag type.
+    Handles various HTML elements like 'select', 'input', and 'textarea', extracting attributes and content relevant to accessibility and interaction.
+    """
 
     salient_attributes = [
         "alt",
@@ -308,7 +316,7 @@ async def get_element_description(element, tag_name, role_value, type_value):
     ]
 
     parent_value = "parent_node: "
-    parent_locator = element.locator('xpath=..')
+    parent_locator = element.locator("xpath=..")
     num_parents = await parent_locator.count()
     if num_parents > 0:
         # only will be zero or one parent node
@@ -332,8 +340,10 @@ async def get_element_description(element, tag_name, role_value, type_value):
         )
 
         if text2:
-            options = await element.evaluate("select => Array.from(select.options).map(option => option.text)",
-                                             timeout=0)
+            options = await element.evaluate(
+                "select => Array.from(select.options).map(option => option.text)",
+                timeout=0,
+            )
             text4 = " | ".join(options)
 
             if not text4:
@@ -341,7 +351,9 @@ async def get_element_description(element, tag_name, role_value, type_value):
                 if not text4:
                     text4 = await element.inner_text(timeout=0)
 
-            return parent_value+text1 + remove_extra_eol(text2.strip()) + text3 + text4
+            return (
+                parent_value + text1 + remove_extra_eol(text2.strip()) + text3 + text4
+            )
 
     input_value = ""
 
@@ -352,15 +364,15 @@ async def get_element_description(element, tag_name, role_value, type_value):
             text1 = "input value="
             text2 = await element.input_value(timeout=0)
             if text2:
-                input_value = text1 + "\"" + text2 + "\"" + " "
+                input_value = text1 + '"' + text2 + '"' + " "
 
     text_content = await element.text_content(timeout=0)
-    text = (text_content or '').strip()
+    text = (text_content or "").strip()
     if text:
         text = remove_extra_eol(text)
         if len(text) > 80:
             text_content_in = await element.inner_text(timeout=0)
-            text_in = (text_content_in or '').strip()
+            text_in = (text_content_in or "").strip()
             if text_in:
                 return input_value + remove_extra_eol(text_in)
         else:
@@ -371,22 +383,21 @@ async def get_element_description(element, tag_name, role_value, type_value):
     for attr in salient_attributes:
         attribute_value = await element.get_attribute(attr, timeout=0)
         if attribute_value:
-            text1 += f"{attr}=" + "\"" + attribute_value.strip() + "\"" + " "
+            text1 += f"{attr}=" + '"' + attribute_value.strip() + '"' + " "
 
     text = (parent_value + text1).strip()
     if text:
         return input_value + remove_extra_eol(text.strip())
 
-
     # try to get from the first child node
-    first_child_locator = element.locator('xpath=./child::*[1]')
+    first_child_locator = element.locator("xpath=./child::*[1]")
 
     num_childs = await first_child_locator.count()
-    if num_childs>0:
+    if num_childs > 0:
         for attr in salient_attributes:
             attribute_value = await first_child_locator.get_attribute(attr, timeout=0)
             if attribute_value:
-                text1 += f"{attr}=" + "\"" + attribute_value.strip() + "\"" + " "
+                text1 += f"{attr}=" + '"' + attribute_value.strip() + '"' + " "
 
         text = (parent_value + text1).strip()
         if text:
@@ -396,9 +407,7 @@ async def get_element_description(element, tag_name, role_value, type_value):
 
 
 async def get_element_data(element, tag_name):
-    tag_name_list = ['a', 'button',
-                     'input',
-                     'select', 'textarea', 'adc-tab']
+    tag_name_list = ["a", "button", "input", "select", "textarea", "adc-tab"]
 
     # await aprint(element,tag_name)
     if await element.is_hidden(timeout=0) or await element.is_disabled(timeout=0):
@@ -410,47 +419,79 @@ async def get_element_data(element, tag_name):
         tag_head = tag_name
         real_tag_name = tag_name
     else:
-        real_tag_name = await element.evaluate("element => element.tagName.toLowerCase()", timeout=0)
+        real_tag_name = await element.evaluate(
+            "element => element.tagName.toLowerCase()", timeout=0
+        )
         if real_tag_name in tag_name_list:
             # already detected
             return None
         else:
             tag_head = real_tag_name
 
-    role_value = await element.get_attribute('role', timeout=0)
-    type_value = await element.get_attribute('type', timeout=0)
+    role_value = await element.get_attribute("role", timeout=0)
+    type_value = await element.get_attribute("type", timeout=0)
     # await aprint("start to get element description",element,tag_name )
-    description = await get_element_description(element, real_tag_name, role_value, type_value)
+    description = await get_element_description(
+        element, real_tag_name, role_value, type_value
+    )
     if not description:
         return None
 
-    rect = await element.bounding_box() or {'x': 0, 'y': 0, 'width': 0, 'height': 0}
+    rect = await element.bounding_box() or {"x": 0, "y": 0, "width": 0, "height": 0}
 
     if role_value:
-        tag_head += " role=" + "\"" + role_value + "\""
+        tag_head += " role=" + '"' + role_value + '"'
     if type_value:
-        tag_head += " type=" + "\"" + type_value + "\""
+        tag_head += " type=" + '"' + type_value + '"'
 
-    box_model = [rect['x'], rect['y'], rect['x'] + rect['width'], rect['y'] + rect['height']]
-    center_point = ((box_model[0] + box_model[2]) / 2, (box_model[1] + box_model[3]) / 2)
+    box_model = [
+        rect["x"],
+        rect["y"],
+        rect["x"] + rect["width"],
+        rect["y"] + rect["height"],
+    ]
+    center_point = (
+        (box_model[0] + box_model[2]) / 2,
+        (box_model[1] + box_model[3]) / 2,
+    )
     selector = element
-
 
     return [center_point, description, tag_head, box_model, selector, real_tag_name]
 
 
 async def get_interactive_elements_with_playwright(page):
     interactive_elements_selectors = [
-        'a', 'button', 'div.footWrap--LePfCZWd > div > div.LeftButtonListForEmphasize--eCGPFYh5 > div:nth-child(2)', '#submitOrder',
-        'input', 'button:text("Add to cart")',
-        'select', 'textarea', 'adc-tab', '[role="button"]', '[role="radio"]', '[role="option"]', '[role="combobox"]',
+        "a",
+        "button",
+        "div.footWrap--LePfCZWd > div > div.LeftButtonListForEmphasize--eCGPFYh5 > div:nth-child(2)",
+        "#submitOrder",
+        "input",
+        'button:text("Add to cart")',
+        "select",
+        "textarea",
+        "adc-tab",
+        '[role="button"]',
+        '[role="radio"]',
+        '[role="option"]',
+        '[role="combobox"]',
         '[role="textbox"]',
-        '[role="listbox"]', '[role="menu"]',
-        '[type="button"]', '[type="radio"]', '[type="combobox"]', '[type="textbox"]', '[type="listbox"]',
+        '[role="listbox"]',
+        '[role="menu"]',
+        '[type="button"]',
+        '[type="radio"]',
+        '[type="combobox"]',
+        '[type="textbox"]',
+        '[type="listbox"]',
         '[type="menu"]',
-        '[tabindex]:not([tabindex="-1"])', '[contenteditable]:not([contenteditable="false"])',
-        '[onclick]', '[onfocus]', '[onkeydown]', '[onkeypress]', '[onkeyup]', "[checkbox]",
-        '[aria-disabled="false"],[data-link]'
+        '[tabindex]:not([tabindex="-1"])',
+        '[contenteditable]:not([contenteditable="false"])',
+        "[onclick]",
+        "[onfocus]",
+        "[onkeydown]",
+        "[onkeypress]",
+        "[onkeyup]",
+        "[checkbox]",
+        '[aria-disabled="false"],[data-link]',
     ]
 
     tasks = []
@@ -461,8 +502,8 @@ async def get_interactive_elements_with_playwright(page):
         element_count = await locator.count()
         for index in range(element_count):
             element = locator.nth(index)
-            tag_name = selector.replace(":not([tabindex=\"-1\"])", "")
-            tag_name = tag_name.replace(":not([contenteditable=\"false\"])", "")
+            tag_name = selector.replace(':not([tabindex="-1"])', "")
+            tag_name = tag_name.replace(':not([contenteditable="false"])', "")
             task = get_element_data(element, tag_name)
 
             tasks.append(task)
@@ -499,7 +540,7 @@ def saveconfig(config, save_file):
     if isinstance(save_file, str):
         save_file = Path(save_file)
     if isinstance(config, dict):
-        with open(save_file, 'w') as f:
+        with open(save_file, "w") as f:
             config_without_key = config
             config_without_key["openai"]["api_key"] = "Your API key here"
             toml.dump(config_without_key, f)

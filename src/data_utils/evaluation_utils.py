@@ -21,7 +21,9 @@ import numpy as np
 from tqdm import tqdm
 import lxml
 from src.data_utils.dom_utils import get_tree_repr, data_prune_tree
+
 logger = logging.getLogger(__name__)
+
 
 def format_input_multichoice(
     sample, candidate_ids, gt=-1, previous_k=5, keep_html_brackets=False
@@ -36,10 +38,10 @@ def format_input_multichoice(
     choices = []
     for idx, node in enumerate(candidate_nodes):
         temp = get_tree_repr(
-                        node,
-                        id_mapping=id_mapping,
-                        keep_html_brackets=keep_html_brackets,
-                    )
+            node,
+            id_mapping=id_mapping,
+            keep_html_brackets=keep_html_brackets,
+        )
         print()
         choices.append(
             [
@@ -85,13 +87,13 @@ def format_input_multichoice(
 
 
 def posthoc_evaluate_dataset(
-        self,
-        dataset,
-        model,
-        prompt_template,
-        top_k=50,
-        output_path=None,
-        name="default",
+    self,
+    dataset,
+    model,
+    prompt_template,
+    top_k=50,
+    output_path=None,
+    name="default",
 ):
     all_element_acc = []
     all_action_f1 = []
@@ -152,13 +154,9 @@ def posthoc_evaluate_dataset(
                 seq_context, seq_in, _, choices = format_input_multichoice(
                     sample, candidate_ids, -1, keep_html_brackets=True
                 )
-                outputs.append(
-                    [candidate_ids, [seq_context, seq_in, choices], None]
-                )
+                outputs.append([candidate_ids, [seq_context, seq_in, choices], None])
 
-                prompt_template[-1][
-                    "content"
-                ] = f"'''\n{seq_context}\n'''\n\n{seq_in}"
+                prompt_template[-1]["content"] = f"'''\n{seq_context}\n'''\n\n{seq_in}"
                 output = model.generate(
                     prompt=prompt_template,
                     max_new_tokens=50,
@@ -192,10 +190,24 @@ def posthoc_evaluate_dataset(
                 else:
                     all_element_acc.append([0, annotation_id])
                 all_action_f1.append(
-                    [self.calculate_f1(final_prediction[1], target_action), annotation_id]
+                    [
+                        self.calculate_f1(final_prediction[1], target_action),
+                        annotation_id,
+                    ]
                 )
-                all_step_acc.append \
-                    ([1 if (all_action_f1[-1][0 ]==1 and all_element_acc[-1][0 ]==1) else 0, annotation_id])
+                all_step_acc.append(
+                    [
+                        (
+                            1
+                            if (
+                                all_action_f1[-1][0] == 1
+                                and all_element_acc[-1][0] == 1
+                            )
+                            else 0
+                        ),
+                        annotation_id,
+                    ]
+                )
                 all_final_predictions.append(
                     [
                         f"{sample['annotation_id']}_{sample['action_uid']}",
@@ -218,13 +230,19 @@ def posthoc_evaluate_dataset(
             for annotation_id, x in marco_step_acc.items():
                 acc_per_website[sample_to_website[annotation_id]].append(np.mean(x))
                 error_count = len([y for y in x if y == 0])
-                if error_count<=3:
+                if error_count <= 3:
                     error_ratio[error_count] += 1
                 else:
                     error_ratio[">3"] += 1
-            acc_per_website = {k: (np.mean(v), len(v)) for k, v in acc_per_website.items()}
-            error_ratio = {k: v/ len(marco_element_acc) for k, v in error_ratio.items()}
-            marco_element_acc = np.mean([np.mean(x) for x in marco_element_acc.values()])
+            acc_per_website = {
+                k: (np.mean(v), len(v)) for k, v in acc_per_website.items()
+            }
+            error_ratio = {
+                k: v / len(marco_element_acc) for k, v in error_ratio.items()
+            }
+            marco_element_acc = np.mean(
+                [np.mean(x) for x in marco_element_acc.values()]
+            )
             marco_action_f1 = np.mean([np.mean(x) for x in marco_action_f1.values()])
             marco_step_acc = np.mean([np.mean(x) for x in marco_step_acc.values()])
 
@@ -253,16 +271,14 @@ def posthoc_evaluate_dataset(
     return result
 
 
-
-
 def evaluate_dataset_llm(
-        self,
-        dataset,
-        model,
-        prompt_template,
-        top_k=50,
-        output_path=None,
-        name="default",
+    self,
+    dataset,
+    model,
+    prompt_template,
+    top_k=50,
+    output_path=None,
+    name="default",
 ):
     all_element_acc = []
     all_action_f1 = []
@@ -323,13 +339,9 @@ def evaluate_dataset_llm(
                 seq_context, seq_in, _, choices = format_input_multichoice(
                     sample, candidate_ids, -1, keep_html_brackets=True
                 )
-                outputs.append(
-                    [candidate_ids, [seq_context, seq_in, choices], None]
-                )
+                outputs.append([candidate_ids, [seq_context, seq_in, choices], None])
 
-                prompt_template[-1][
-                    "content"
-                ] = f"'''\n{seq_context}\n'''\n\n{seq_in}"
+                prompt_template[-1]["content"] = f"'''\n{seq_context}\n'''\n\n{seq_in}"
                 output = model.generate(
                     prompt=prompt_template,
                     max_new_tokens=50,
@@ -363,10 +375,24 @@ def evaluate_dataset_llm(
                 else:
                     all_element_acc.append([0, annotation_id])
                 all_action_f1.append(
-                    [self.calculate_f1(final_prediction[1], target_action), annotation_id]
+                    [
+                        self.calculate_f1(final_prediction[1], target_action),
+                        annotation_id,
+                    ]
                 )
-                all_step_acc.append \
-                    ([1 if (all_action_f1[-1][0 ]==1 and all_element_acc[-1][0 ]==1) else 0, annotation_id])
+                all_step_acc.append(
+                    [
+                        (
+                            1
+                            if (
+                                all_action_f1[-1][0] == 1
+                                and all_element_acc[-1][0] == 1
+                            )
+                            else 0
+                        ),
+                        annotation_id,
+                    ]
+                )
                 all_final_predictions.append(
                     [
                         f"{sample['annotation_id']}_{sample['action_uid']}",
@@ -389,13 +415,19 @@ def evaluate_dataset_llm(
             for annotation_id, x in marco_step_acc.items():
                 acc_per_website[sample_to_website[annotation_id]].append(np.mean(x))
                 error_count = len([y for y in x if y == 0])
-                if error_count<=3:
+                if error_count <= 3:
                     error_ratio[error_count] += 1
                 else:
                     error_ratio[">3"] += 1
-            acc_per_website = {k: (np.mean(v), len(v)) for k, v in acc_per_website.items()}
-            error_ratio = {k: v/ len(marco_element_acc) for k, v in error_ratio.items()}
-            marco_element_acc = np.mean([np.mean(x) for x in marco_element_acc.values()])
+            acc_per_website = {
+                k: (np.mean(v), len(v)) for k, v in acc_per_website.items()
+            }
+            error_ratio = {
+                k: v / len(marco_element_acc) for k, v in error_ratio.items()
+            }
+            marco_element_acc = np.mean(
+                [np.mean(x) for x in marco_element_acc.values()]
+            )
             marco_action_f1 = np.mean([np.mean(x) for x in marco_action_f1.values()])
             marco_step_acc = np.mean([np.mean(x) for x in marco_step_acc.values()])
 

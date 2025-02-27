@@ -167,7 +167,3 @@ first_row = df.iloc[0]
 first_row.to_frame().T.to_excel("first_row.xlsx", index=False)
 
 print("第一行数据已保存到 'first_row.xlsx'")
-
-
-
-

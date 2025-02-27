@@ -16,8 +16,10 @@
 import string
 import lxml
 from .dom_utils import get_tree_repr, data_prune_tree
+
+
 def data_format_input_multichoice(
-        sample, candidate_ids, gt=-1, previous_k=5, keep_html_brackets=False
+    sample, candidate_ids, gt=-1, previous_k=5, keep_html_brackets=False
 ):
     # Parse html into a dom tree
     dom_tree = lxml.etree.fromstring(sample["cleaned_html"])
@@ -76,7 +78,9 @@ def data_format_input_multichoice(
     return tree_repr, seq_input, seq_target, choices, node_to_keep
 
 
-def generate_query_prompt(system_prompt="", task="", previous_actions=None, question_description=""):
+def generate_query_prompt(
+    system_prompt="", task="", previous_actions=None, question_description=""
+):
     """
     Generate the first phase prompt to ask model to generate general descriptions about {environment, high-level plans, next step action}
     Each experiment will have a similar prompt in this phase
@@ -106,13 +110,15 @@ def generate_query_prompt(system_prompt="", task="", previous_actions=None, ques
     return query_text
 
 
-def generate_new_query_prompt(system_prompt="", task="", previous_actions=None, question_description=""):
+def generate_new_query_prompt(
+    system_prompt="", task="", previous_actions=None, question_description=""
+):
     """
     Generate the first phase prompt to ask model to generate general descriptions about {environment, high-level plans, next step action}
     Each experiment will have a similar prompt in this phase
     This prompt is used to generate models' thoughts without disrupt of formatting/referring prompts
     """
-    sys_role=""+system_prompt
+    sys_role = "" + system_prompt
     query_text = ""
 
     # System Prompt
@@ -134,10 +140,16 @@ def generate_new_query_prompt(system_prompt="", task="", previous_actions=None, 
 
     # Question Description
     query_text += question_description
-    return [sys_role,query_text]
+    return [sys_role, query_text]
 
-def generate_referring_prompt(referring_description="", element_format="", action_format="", value_format="",
-                              choices=None):
+
+def generate_referring_prompt(
+    referring_description="",
+    element_format="",
+    action_format="",
+    value_format="",
+    choices=None,
+):
     referring_prompt = ""
 
     # Add description about how to format output
@@ -170,8 +182,14 @@ def generate_referring_prompt(referring_description="", element_format="", actio
     return referring_prompt
 
 
-def generate_new_referring_prompt(referring_description="", element_format="", action_format="", value_format="",
-                              choices=None,split="4"):
+def generate_new_referring_prompt(
+    referring_description="",
+    element_format="",
+    action_format="",
+    value_format="",
+    choices=None,
+    split="4",
+):
     referring_prompt = ""
 
     # Add description about how to format output
@@ -180,7 +198,6 @@ def generate_new_referring_prompt(referring_description="", element_format="", a
         referring_prompt += "\n\n"
 
     # Add element prediction format and choices
-
 
     # Prepare Option texts
     # For exp {1, 2, 4}, generate option
@@ -204,13 +221,14 @@ def generate_new_referring_prompt(referring_description="", element_format="", a
         referring_prompt += ""
 
     return referring_prompt
+
 
 def format_options(choices):
     option_text = ""
-    abcd = ''
-    non_abcd = ''
+    abcd = ""
+    non_abcd = ""
 
-    multi_choice = ''
+    multi_choice = ""
     for multichoice_idx, choice in enumerate(choices):
         multi_choice += f"{generate_option_name(multichoice_idx)}. {choice[1]}\n"
         abcd += f"{generate_option_name(multichoice_idx)}, "
@@ -221,7 +239,7 @@ def format_options(choices):
     # option_text += abcd
     option_text += f"If none of these elements match your target element, please select {non_abcd}. None of the other options match the correct element.\n"
 
-    option_text += (multi_choice + '\n\n')
+    option_text += multi_choice + "\n\n"
     return option_text
 
 
@@ -235,6 +253,7 @@ def generate_option_name(index):
         second_letter = string.ascii_uppercase[second_letter_index]
         return f"{first_letter}{second_letter}"
 
+
 def get_index_from_option_name(name):
     if len(name) == 1:
         return string.ascii_uppercase.index(name)
@@ -244,5 +263,3 @@ def get_index_from_option_name(name):
         return 26 + first_letter_index * 26 + second_letter_index
     else:
         raise Exception("The string should be either 1 or 2 characters long")
-
-

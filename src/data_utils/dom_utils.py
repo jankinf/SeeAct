@@ -40,8 +40,8 @@ salient_attributes = {
 
 def remove_extra_eol(text):
     # Replace EOL symbols
-    text = text.replace('\n', ' ')
-    return re.sub(r'\s{2,}', ' ', text)
+    text = text.replace("\n", " ")
+    return re.sub(r"\s{2,}", " ", text)
 
 
 def clean_text(text):
@@ -76,12 +76,12 @@ def clean_tree(dom_tree, all_candidate_ids):
                     node.attrib.pop(attr)
             elif attr in salient_attributes:
                 if not (
-                        (
-                                attr == "role"
-                                and node.attrib.get(attr, "")
-                                in {"presentation", "none", "link"}
-                        )
-                        or (attr == "type" and node.attrib.get(attr, "") == "hidden")
+                    (
+                        attr == "role"
+                        and node.attrib.get(attr, "")
+                        in {"presentation", "none", "link"}
+                    )
+                    or (attr == "type" and node.attrib.get(attr, "") == "hidden")
                 ):
                     value = clean_text(node.attrib[attr])
                     if value != "":
@@ -99,11 +99,11 @@ def clean_tree(dom_tree, all_candidate_ids):
             else:
                 node.getparent().remove(node)
         elif (
-                node.attrib.get("backend_node_id", "") not in all_candidate_ids
-                and len(node.attrib) == 1
-                and not any([x.tag == "text" for x in node.getchildren()])
-                and node.getparent() is not None
-                and len(node.getchildren()) <= 1
+            node.attrib.get("backend_node_id", "") not in all_candidate_ids
+            and len(node.attrib) == 1
+            and not any([x.tag == "text" for x in node.getchildren()])
+            and node.getparent() is not None
+            and len(node.getchildren()) <= 1
         ):
             # insert all children into parent
             for child in node.getchildren():
@@ -113,11 +113,11 @@ def clean_tree(dom_tree, all_candidate_ids):
 
 
 def prune_tree(
-        dom_tree,
-        candidate_set,
-        max_depth=5,
-        max_children=50,
-        max_sibling=3,
+    dom_tree,
+    candidate_set,
+    max_depth=5,
+    max_children=50,
+    max_sibling=3,
 ):
     nodes_to_keep = set()
     for candidate_id in candidate_set:
@@ -146,10 +146,10 @@ def prune_tree(
                 [
                     x.attrib.get("backend_node_id", "")
                     for x in siblings[
-                             max(0, idx_in_sibling - max_sibling): idx_in_sibling
-                                                                   + max_sibling
-                                                                   + 1
-                             ]
+                        max(0, idx_in_sibling - max_sibling) : idx_in_sibling
+                        + max_sibling
+                        + 1
+                    ]
                 ]
             )
     # clone the tree
@@ -161,10 +161,10 @@ def prune_tree(
             is_candidate = node.attrib.get("backend_node_id", "") in candidate_set
         else:
             is_keep = (
-                    node.getparent().attrib.get("backend_node_id", "") in nodes_to_keep
+                node.getparent().attrib.get("backend_node_id", "") in nodes_to_keep
             )
             is_candidate = (
-                    node.getparent().attrib.get("backend_node_id", "") in candidate_set
+                node.getparent().attrib.get("backend_node_id", "") in candidate_set
             )
         if not is_keep and node.getparent() is not None:
             node.getparent().remove(node)
@@ -172,11 +172,11 @@ def prune_tree(
             if not is_candidate or node.tag == "text":
                 node.attrib.pop("backend_node_id", None)
             if (
-                    len(node.attrib) == 0
-                    and not any([x.tag == "text" for x in node.getchildren()])
-                    and node.getparent() is not None
-                    and node.tag != "text"
-                    and len(node.getchildren()) <= 1
+                len(node.attrib) == 0
+                and not any([x.tag == "text" for x in node.getchildren()])
+                and node.getparent() is not None
+                and node.tag != "text"
+                and len(node.getchildren()) <= 1
             ):
                 # insert all children into parent
                 for child in node.getchildren():
@@ -186,11 +186,11 @@ def prune_tree(
 
 
 def data_prune_tree(
-        dom_tree,
-        candidate_set,
-        max_depth=5,
-        max_children=50,
-        max_sibling=3,
+    dom_tree,
+    candidate_set,
+    max_depth=5,
+    max_children=50,
+    max_sibling=3,
 ):
     nodes_to_keep = set()
     for candidate_id in candidate_set:
@@ -219,10 +219,10 @@ def data_prune_tree(
                 [
                     x.attrib.get("backend_node_id", "")
                     for x in siblings[
-                             max(0, idx_in_sibling - max_sibling): idx_in_sibling
-                                                                   + max_sibling
-                                                                   + 1
-                             ]
+                        max(0, idx_in_sibling - max_sibling) : idx_in_sibling
+                        + max_sibling
+                        + 1
+                    ]
                 ]
             )
     # clone the tree
@@ -234,10 +234,10 @@ def data_prune_tree(
             is_candidate = node.attrib.get("backend_node_id", "") in candidate_set
         else:
             is_keep = (
-                    node.getparent().attrib.get("backend_node_id", "") in nodes_to_keep
+                node.getparent().attrib.get("backend_node_id", "") in nodes_to_keep
             )
             is_candidate = (
-                    node.getparent().attrib.get("backend_node_id", "") in candidate_set
+                node.getparent().attrib.get("backend_node_id", "") in candidate_set
             )
         if not is_keep and node.getparent() is not None:
             node.getparent().remove(node)
@@ -245,11 +245,11 @@ def data_prune_tree(
             if not is_candidate or node.tag == "text":
                 node.attrib.pop("backend_node_id", None)
             if (
-                    len(node.attrib) == 0
-                    and not any([x.tag == "text" for x in node.getchildren()])
-                    and node.getparent() is not None
-                    and node.tag != "text"
-                    and len(node.getchildren()) <= 1
+                len(node.attrib) == 0
+                and not any([x.tag == "text" for x in node.getchildren()])
+                and node.getparent() is not None
+                and node.tag != "text"
+                and len(node.getchildren()) <= 1
             ):
                 # insert all children into parent
                 for child in node.getchildren():
@@ -307,7 +307,7 @@ def get_attribute_repr(node, max_value_length=5, max_length=20):
 
 
 def get_tree_repr(
-        tree, max_value_length=5, max_length=20, id_mapping={}, keep_html_brackets=False
+    tree, max_value_length=5, max_length=20, id_mapping={}, keep_html_brackets=False
 ):
     if isinstance(tree, str):
         tree = etree.fromstring(tree)
@@ -378,7 +378,7 @@ def extract_elements_from_html(whole_html):
             invalids.append(text)
 
     # Using Beautify Soup
-    soup = BeautifulSoup(whole_html, 'html.parser')
+    soup = BeautifulSoup(whole_html, "html.parser")
     # Find all elements and get their tag names
     tag_names = [tag.name for tag in soup.find_all()]
 
@@ -390,11 +390,11 @@ def extract_elements_from_html(whole_html):
         tag_elements = []
         elements = soup.find_all(tag)
         for element in elements:
-            if 'backend_node_id' not in element.attrs:
+            if "backend_node_id" not in element.attrs:
                 continue
-            temp = [element.attrs['backend_node_id'], clean_element_text(element.text)]
-            if 'alt' in element.attrs:
-                temp.append(element.attrs['alt'])
+            temp = [element.attrs["backend_node_id"], clean_element_text(element.text)]
+            if "alt" in element.attrs:
+                temp.append(element.attrs["alt"])
             tag_elements.append(temp)
             if clean_element_text(element.text) == "":
                 t = element.attrs
@@ -403,9 +403,7 @@ def extract_elements_from_html(whole_html):
     return element_dict
 
 
-def locate_element_attributes(
-        sample, keep_html_brackets=False
-):
+def locate_element_attributes(sample, keep_html_brackets=False):
     # Parse html into a dom tree
     dom_tree = lxml.etree.fromstring(sample["cleaned_html"])
     tree_repr, backend_node_id2id = get_tree_repr(
@@ -425,11 +423,13 @@ def locate_element_attributes(
     for node in node_to_traverse:
         if "backend_node_id" not in node.attrib:
             continue
-        all_node_attributes.append([
-            node.attrib,
-            node.tag,
-            node.text,
-        ])
+        all_node_attributes.append(
+            [
+                node.attrib,
+                node.tag,
+                node.text,
+            ]
+        )
     return all_node_attributes
 
 
