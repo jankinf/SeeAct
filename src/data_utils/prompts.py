@@ -14,6 +14,9 @@
 # limitations under the License.
 
 from .format_prompt_utils import (
+    data_format_input_multichoice,
+    format_options,
+    generate_option_name,
     generate_new_referring_prompt,
     generate_new_query_prompt,
 )
