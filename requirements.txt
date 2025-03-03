@@ -16,10 +16,16 @@ aiohttp==3.11.12
     #   datasets
     #   fsspec
     #   litellm
+    #   vllm
 aiosignal==1.3.2
     # via
     #   -r requirements.in
     #   aiohttp
+    #   ray
+airportsdata==20250224
+    # via
+    #   -r requirements.in
+    #   outlines
 annotated-types==0.7.0
     # via
     #   -r requirements.in
@@ -29,6 +35,12 @@ anyio==4.8.0
     #   -r requirements.in
     #   httpx
     #   openai
+    #   starlette
+    #   watchfiles
+astor==0.8.1
+    # via
+    #   -r requirements.in
+    #   depyf
 async-timeout==5.0.1
     # via
     #   -r requirements.in
@@ -37,16 +49,26 @@ attrs==25.1.0
     # via
     #   -r requirements.in
     #   aiohttp
+    #   jsonschema
+    #   referencing
 backoff==2.2.1
-    # via
-    #   -r requirements.in
-    #   seeact
+    # via -r requirements.in
 beautifulsoup4==4.13.3
     # via
     #   -r requirements.in
     #   bs4
+black==25.1.0
+    # via -r requirements.in
+blake3==1.0.4
+    # via
+    #   -r requirements.in
+    #   vllm
 bs4==0.0.2
     # via -r requirements.in
+build==1.2.2.post1
+    # via
+    #   -r requirements.in
+    #   pip-tools
 cachetools==5.5.1
     # via
     #   -r requirements.in
@@ -64,42 +86,101 @@ charset-normalizer==3.4.1
 click==8.1.8
     # via
     #   -r requirements.in
+    #   black
     #   litellm
-cmake==3.31.4
-    # via triton
+    #   pip-tools
+    #   ray
+    #   rich-toolkit
+    #   typer
+    #   uvicorn
+cloudpickle==3.1.1
+    # via
+    #   -r requirements.in
+    #   outlines
+    #   vllm
+compressed-tensors==0.9.1
+    # via
+    #   -r requirements.in
+    #   vllm
+cupy-cuda12x==13.3.0
+    # via
+    #   -r requirements.in
+    #   ray
 datasets==3.2.0
     # via -r requirements.in
+depyf==0.18.0
+    # via
+    #   -r requirements.in
+    #   vllm
 dill==0.3.8
     # via
     #   -r requirements.in
     #   datasets
+    #   depyf
     #   multiprocess
+diskcache==5.6.3
+    # via
+    #   -r requirements.in
+    #   outlines
 distro==1.9.0
     # via
     #   -r requirements.in
     #   openai
+dnspython==2.7.0
+    # via
+    #   -r requirements.in
+    #   email-validator
+einops==0.8.1
+    # via
+    #   -r requirements.in
+    #   vllm
+email-validator==2.2.0
+    # via
+    #   -r requirements.in
+    #   fastapi
 exceptiongroup==1.2.2
     # via
     #   -r requirements.in
     #   anyio
+    #   pytest
+fastapi[standard]==0.115.9
+    # via
+    #   -r requirements.in
+    #   vllm
+fastapi-cli[standard]==0.0.7
+    # via
+    #   -r requirements.in
+    #   fastapi
+fastrlock==0.8.3
+    # via
+    #   -r requirements.in
+    #   cupy-cuda12x
 filelock==3.17.0
     # via
     #   -r requirements.in
     #   datasets
     #   huggingface-hub
+    #   ray
     #   torch
     #   transformers
     #   triton
+    #   vllm
 frozenlist==1.5.0
     # via
     #   -r requirements.in
     #   aiohttp
     #   aiosignal
+    #   ray
 fsspec[http]==2024.9.0
     # via
     #   -r requirements.in
     #   datasets
     #   huggingface-hub
+    #   torch
+gguf==0.10.0
+    # via
+    #   -r requirements.in
+    #   vllm
 gmpy2==2.2.1
     # via -r requirements.in
 google-ai-generativelanguage==0.6.2
@@ -129,9 +210,7 @@ google-auth-httplib2==0.2.0
     #   -r requirements.in
     #   google-api-python-client
 google-generativeai==0.5.2
-    # via
-    #   -r requirements.in
-    #   seeact
+    # via -r requirements.in
 googleapis-common-protos==1.67.0
     # via
     #   -r requirements.in
@@ -154,6 +233,7 @@ h11==0.14.0
     # via
     #   -r requirements.in
     #   httpcore
+    #   uvicorn
 httpcore==1.0.7
     # via
     #   -r requirements.in
@@ -163,11 +243,15 @@ httplib2==0.22.0
     #   -r requirements.in
     #   google-api-python-client
     #   google-auth-httplib2
+httptools==0.6.4
+    # via
+    #   -r requirements.in
+    #   uvicorn
 httpx==0.27.2
     # via
     #   -r requirements.in
+    #   fastapi
     #   openai
-    #   seeact
 huggingface-hub==0.28.1
     # via
     #   -r requirements.in
@@ -179,6 +263,7 @@ idna==3.10
     # via
     #   -r requirements.in
     #   anyio
+    #   email-validator
     #   httpx
     #   requests
     #   yarl
@@ -186,31 +271,80 @@ importlib-metadata==8.6.1
     # via
     #   -r requirements.in
     #   litellm
+    #   vllm
+iniconfig==2.0.0
+    # via
+    #   -r requirements.in
+    #   pytest
 intel-cmplr-lib-ur==2025.0.4
     # via intel-openmp
 intel-openmp==2025.0.4
     # via mkl
+interegular==0.3.3
+    # via
+    #   -r requirements.in
+    #   lm-format-enforcer
+    #   outlines
+    #   outlines-core
 jinja2==3.1.5
     # via
     #   -r requirements.in
+    #   fastapi
     #   litellm
+    #   outlines
     #   torch
+jiter==0.8.2
+    # via
+    #   -r requirements.in
+    #   openai
 joblib==1.4.2
     # via
     #   -r requirements.in
     #   scikit-learn
-lit==18.1.8
-    # via triton
-litellm==1.35.32
+jsonschema==4.23.0
     # via
     #   -r requirements.in
-    #   seeact
+    #   mistral-common
+    #   outlines
+    #   outlines-core
+    #   ray
+jsonschema-specifications==2024.10.1
+    # via
+    #   -r requirements.in
+    #   jsonschema
+lark==1.2.2
+    # via
+    #   -r requirements.in
+    #   outlines
+    #   vllm
+litellm==1.35.32
+    # via -r requirements.in
+llvmlite==0.43.0
+    # via
+    #   -r requirements.in
+    #   numba
+lm-format-enforcer==0.10.11
+    # via
+    #   -r requirements.in
+    #   vllm
 lxml==5.3.1
     # via -r requirements.in
+markdown-it-py==3.0.0
+    # via
+    #   -r requirements.in
+    #   rich
 markupsafe==3.0.2
     # via
     #   -r requirements.in
     #   jinja2
+mdurl==0.1.2
+    # via
+    #   -r requirements.in
+    #   markdown-it-py
+mistral-common[opencv]==1.5.3
+    # via
+    #   -r requirements.in
+    #   vllm
 mkl==2025.0.1
     # via
     #   mkl-fft
@@ -226,6 +360,14 @@ mpmath==1.3.0
     # via
     #   -r requirements.in
     #   sympy
+msgpack==1.1.0
+    # via
+    #   -r requirements.in
+    #   ray
+msgspec==0.19.0
+    # via
+    #   -r requirements.in
+    #   vllm
 multidict==6.1.0
     # via
     #   -r requirements.in
@@ -235,70 +377,162 @@ multiprocess==0.70.16
     # via
     #   -r requirements.in
     #   datasets
+mypy-extensions==1.0.0
+    # via
+    #   -r requirements.in
+    #   black
+nest-asyncio==1.6.0
+    # via
+    #   -r requirements.in
+    #   outlines
 networkx==3.4.2
     # via
     #   -r requirements.in
     #   torch
+numba==0.60.0
+    # via
+    #   -r requirements.in
+    #   vllm
 numpy==1.26.4
     # via
     #   -r requirements.in
+    #   cupy-cuda12x
     #   datasets
+    #   gguf
+    #   mistral-common
     #   mkl-fft
     #   mkl-random
+    #   numba
+    #   opencv-python-headless
+    #   outlines
     #   pandas
     #   scikit-learn
     #   scipy
     #   torchvision
     #   transformers
-nvidia-cublas-cu11==11.10.3.66
+    #   vllm
+    #   xformers
+nvidia-cublas-cu12==12.4.5.8
     # via
-    #   nvidia-cudnn-cu11
-    #   nvidia-cusolver-cu11
+    #   -r requirements.in
+    #   nvidia-cudnn-cu12
+    #   nvidia-cusolver-cu12
     #   torch
-nvidia-cuda-cupti-cu11==11.7.101
-    # via torch
-nvidia-cuda-nvrtc-cu11==11.7.99
-    # via torch
-nvidia-cuda-runtime-cu11==11.7.99
-    # via torch
-nvidia-cudnn-cu11==8.5.0.96
-    # via torch
-nvidia-cufft-cu11==10.9.0.58
-    # via torch
-nvidia-curand-cu11==10.2.10.91
-    # via torch
-nvidia-cusolver-cu11==11.4.0.1
-    # via torch
-nvidia-cusparse-cu11==11.7.4.91
-    # via torch
-nvidia-nccl-cu11==2.14.3
-    # via torch
-nvidia-nvtx-cu11==11.7.91
-    # via torch
-openai==1.24.0
+nvidia-cuda-cupti-cu12==12.4.127
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-cuda-nvrtc-cu12==12.4.127
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-cuda-runtime-cu12==12.4.127
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-cudnn-cu12==9.1.0.70
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-cufft-cu12==11.2.1.3
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-curand-cu12==10.3.5.147
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-cusolver-cu12==11.6.1.9
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-cusparse-cu12==12.3.1.170
+    # via
+    #   -r requirements.in
+    #   nvidia-cusolver-cu12
+    #   torch
+nvidia-nccl-cu12==2.21.5
+    # via
+    #   -r requirements.in
+    #   torch
+nvidia-nvjitlink-cu12==12.4.127
+    # via
+    #   -r requirements.in
+    #   nvidia-cusolver-cu12
+    #   nvidia-cusparse-cu12
+    #   torch
+nvidia-nvtx-cu12==12.4.127
+    # via
+    #   -r requirements.in
+    #   torch
+openai==1.65.1
     # via
     #   -r requirements.in
     #   litellm
-    #   seeact
+    #   vllm
+opencv-python-headless==4.11.0.86
+    # via
+    #   -r requirements.in
+    #   mistral-common
+outlines==0.1.11
+    # via
+    #   -r requirements.in
+    #   vllm
+outlines-core==0.1.26
+    # via
+    #   -r requirements.in
+    #   outlines
 packaging==24.2
     # via
     #   -r requirements.in
+    #   black
+    #   build
     #   datasets
     #   huggingface-hub
+    #   lm-format-enforcer
+    #   pytest
+    #   ray
     #   transformers
 pandas==2.2.3
     # via
     #   -r requirements.in
     #   datasets
+partial-json-parser==0.2.1.1.post5
+    # via
+    #   -r requirements.in
+    #   vllm
+pathspec==0.12.1
+    # via
+    #   -r requirements.in
+    #   black
 pillow==11.1.0
     # via
     #   -r requirements.in
+    #   mistral-common
     #   sentence-transformers
     #   torchvision
-playwright==1.50.0
+    #   vllm
+pip-tools==7.4.1
+    # via -r requirements.in
+platformdirs==4.3.6
     # via
     #   -r requirements.in
-    #   seeact
+    #   black
+playwright==1.50.0
+    # via -r requirements.in
+pluggy==1.5.0
+    # via
+    #   -r requirements.in
+    #   pytest
+prometheus-client==0.21.1
+    # via
+    #   -r requirements.in
+    #   prometheus-fastapi-instrumentator
+    #   vllm
+prometheus-fastapi-instrumentator==7.0.2
+    # via
+    #   -r requirements.in
+    #   vllm
 propcache==0.2.1
     # via
     #   -r requirements.in
@@ -318,6 +552,16 @@ protobuf==4.25.6
     #   googleapis-common-protos
     #   grpcio-status
     #   proto-plus
+    #   ray
+    #   vllm
+psutil==7.0.0
+    # via
+    #   -r requirements.in
+    #   vllm
+py-cpuinfo==9.0.0
+    # via
+    #   -r requirements.in
+    #   vllm
 pyarrow==19.0.0
     # via
     #   -r requirements.in
@@ -331,11 +575,26 @@ pyasn1-modules==0.4.1
     # via
     #   -r requirements.in
     #   google-auth
+pybind11==2.13.6
+    # via
+    #   -r requirements.in
+    #   xgrammar
+pycountry==24.6.1
+    # via
+    #   -r requirements.in
+    #   outlines
 pydantic==2.10.6
     # via
     #   -r requirements.in
+    #   compressed-tensors
+    #   fastapi
     #   google-generativeai
+    #   lm-format-enforcer
+    #   mistral-common
     #   openai
+    #   outlines
+    #   vllm
+    #   xgrammar
 pydantic-core==2.27.2
     # via
     #   -r requirements.in
@@ -344,10 +603,23 @@ pyee==12.1.1
     # via
     #   -r requirements.in
     #   playwright
+pygments==2.19.1
+    # via
+    #   -r requirements.in
+    #   rich
 pyparsing==3.2.1
     # via
     #   -r requirements.in
     #   httplib2
+pyproject-hooks==1.2.0
+    # via
+    #   -r requirements.in
+    #   build
+    #   pip-tools
+pytest==8.3.4
+    # via
+    #   -r requirements.in
+    #   xgrammar
 python-dateutil==2.9.0.post0
     # via
     #   -r requirements.in
@@ -356,7 +628,11 @@ python-dotenv==1.0.1
     # via
     #   -r requirements.in
     #   litellm
-    #   seeact
+    #   uvicorn
+python-multipart==0.0.20
+    # via
+    #   -r requirements.in
+    #   fastapi
 pytz==2025.1
     # via
     #   -r requirements.in
@@ -365,8 +641,27 @@ pyyaml==6.0.2
     # via
     #   -r requirements.in
     #   datasets
+    #   gguf
     #   huggingface-hub
+    #   lm-format-enforcer
+    #   ray
     #   transformers
+    #   uvicorn
+    #   vllm
+pyzmq==26.2.1
+    # via
+    #   -r requirements.in
+    #   vllm
+ray[adag]==2.40.0
+    # via
+    #   -r requirements.in
+    #   vllm
+referencing==0.36.2
+    # via
+    #   -r requirements.in
+    #   jsonschema
+    #   jsonschema-specifications
+    #   outlines
 regex==2024.11.6
     # via
     #   -r requirements.in
@@ -379,13 +674,32 @@ requests==2.32.3
     #   google-api-core
     #   huggingface-hub
     #   litellm
+    #   mistral-common
+    #   outlines
+    #   ray
     #   tiktoken
-    #   torchvision
     #   transformers
+    #   vllm
+rich==13.9.4
+    # via
+    #   -r requirements.in
+    #   rich-toolkit
+    #   typer
+rich-toolkit==0.13.2
+    # via
+    #   -r requirements.in
+    #   fastapi-cli
+rpds-py==0.23.1
+    # via
+    #   -r requirements.in
+    #   jsonschema
+    #   referencing
 rsa==4.9
     # via
     #   -r requirements.in
     #   google-auth
+ruff==0.9.7
+    # via -r requirements.in
 safetensors==0.5.2
     # via
     #   -r requirements.in
@@ -399,10 +713,18 @@ scipy==1.15.2
     #   -r requirements.in
     #   scikit-learn
     #   sentence-transformers
-seeact==0.2.9.0
-    # via -r requirements.in
 sentence-transformers==3.4.1
     # via -r requirements.in
+sentencepiece==0.2.0
+    # via
+    #   -r requirements.in
+    #   mistral-common
+    #   vllm
+    #   xgrammar
+shellingham==1.5.4
+    # via
+    #   -r requirements.in
+    #   typer
 six==1.17.0
     # via
     #   -r requirements.in
@@ -418,7 +740,12 @@ soupsieve==2.6
     # via
     #   -r requirements.in
     #   beautifulsoup4
-sympy==1.13.3
+starlette==0.45.3
+    # via
+    #   -r requirements.in
+    #   fastapi
+    #   prometheus-fastapi-instrumentator
+sympy==1.13.1
     # via
     #   -r requirements.in
     #   torch
@@ -436,56 +763,93 @@ tiktoken==0.9.0
     # via
     #   -r requirements.in
     #   litellm
+    #   mistral-common
+    #   vllm
+    #   xgrammar
 tokenizers==0.21.0
     # via
     #   -r requirements.in
     #   litellm
     #   transformers
+    #   vllm
 toml==0.10.2
+    # via -r requirements.in
+tomli==2.2.1
     # via
     #   -r requirements.in
-    #   seeact
-torch==2.0.1
+    #   black
+    #   build
+    #   pip-tools
+    #   pytest
+torch==2.5.1
     # via
     #   -r requirements.in
+    #   compressed-tensors
+    #   outlines
     #   sentence-transformers
     #   torchaudio
     #   torchvision
-    #   triton
-torchaudio==2.0.2
-    # via -r requirements.in
-torchvision==0.15.2
-    # via -r requirements.in
+    #   vllm
+    #   xformers
+    #   xgrammar
+torchaudio==2.5.1
+    # via
+    #   -r requirements.in
+    #   vllm
+torchvision==0.20.1
+    # via
+    #   -r requirements.in
+    #   vllm
 tqdm==4.67.1
     # via
     #   -r requirements.in
     #   datasets
+    #   gguf
     #   google-generativeai
     #   huggingface-hub
     #   openai
+    #   outlines
     #   sentence-transformers
     #   transformers
+    #   vllm
 transformers==4.49.0
     # via
     #   -r requirements.in
+    #   compressed-tensors
     #   sentence-transformers
-triton==2.0.0
+    #   vllm
+    #   xgrammar
+triton==3.1.0
     # via
     #   -r requirements.in
     #   torch
+typer==0.15.2
+    # via
+    #   -r requirements.in
+    #   fastapi-cli
 typing-extensions==4.12.2
     # via
     #   -r requirements.in
     #   anyio
     #   beautifulsoup4
+    #   black
+    #   fastapi
     #   google-generativeai
     #   huggingface-hub
+    #   mistral-common
     #   multidict
     #   openai
+    #   outlines
     #   pydantic
     #   pydantic-core
     #   pyee
+    #   referencing
+    #   rich
+    #   rich-toolkit
     #   torch
+    #   typer
+    #   uvicorn
+    #   vllm
 tzdata==2025.1
     # via
     #   -r requirements.in
@@ -500,14 +864,35 @@ urllib3==2.3.0
     # via
     #   -r requirements.in
     #   requests
-wheel==0.45.1
+uvicorn[standard]==0.34.0
     # via
-    #   nvidia-cublas-cu11
-    #   nvidia-cuda-cupti-cu11
-    #   nvidia-cuda-runtime-cu11
-    #   nvidia-curand-cu11
-    #   nvidia-cusparse-cu11
-    #   nvidia-nvtx-cu11
+    #   -r requirements.in
+    #   fastapi
+    #   fastapi-cli
+uvloop==0.21.0
+    # via
+    #   -r requirements.in
+    #   uvicorn
+vllm==0.7.3
+    # via -r requirements.in
+watchfiles==1.0.4
+    # via
+    #   -r requirements.in
+    #   uvicorn
+websockets==15.0
+    # via
+    #   -r requirements.in
+    #   uvicorn
+wheel==0.45.1
+    # via pip-tools
+xformers==0.0.28.post3
+    # via
+    #   -r requirements.in
+    #   vllm
+xgrammar==0.1.11
+    # via
+    #   -r requirements.in
+    #   vllm
 xxhash==3.5.0
     # via
     #   -r requirements.in
@@ -522,4 +907,5 @@ zipp==3.21.0
     #   importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
+# pip
 # setuptools
