@@ -26,6 +26,10 @@ from dotenv import load_dotenv
 import litellm
 import base64
 
+from .vllm_vl_helper import model_example_map
+from vllm import LLM, SamplingParams
+
+
 EMPTY_API_KEY = "Your API KEY Here"
 
 
@@ -54,32 +58,44 @@ def encode_image(image_path):
 
 def engine_factory(api_key=None, model=None, **kwargs):
     model = model.lower()
-    if model in [
+    supported_openai_model_list = [
         "gpt-4-vision-preview",
         "gpt-4-turbo",
         "gpt-4o",
         "gpt-4o-mini",
         "gpt-4o-2024-11-20",
         "gpt-4o-2024-08-06",
-    ]:
+    ]
+    supported_openai_compatible_model_list = [
+        "deepseek-ai/Janus-Pro-7B",
+        "llava-hf/llava-1.5-7b-hf",
+    ]
+    supported_gemini_model_list = ["gemini-1.5-pro-latest", "gemini-1.5-flash"]
+    supported_ollama_model_list = ["llava"]
+    supported_model_list = (
+        supported_openai_model_list
+        + supported_openai_compatible_model_list
+        + supported_gemini_model_list
+        + supported_ollama_model_list
+    )
+    if model in supported_openai_model_list + supported_openai_compatible_model_list:
         if api_key and api_key != EMPTY_API_KEY:
             os.environ["OPENAI_API_KEY"] = api_key
         else:
             load_openai_api_key()
         return OpenAIEngine(model=model, **kwargs)
-    elif model in ["gemini-1.5-pro-latest", "gemini-1.5-flash"]:
+    elif model in supported_gemini_model_list:
         if api_key and api_key != EMPTY_API_KEY:
             os.environ["GEMINI_API_KEY"] = api_key
         else:
             load_gemini_api_key()
         model = f"gemini/{model}"
         return GeminiEngine(model=model, **kwargs)
-    elif model == "llava":
-        model = "llava"
+    elif model in supported_ollama_model_list:
         return OllamaEngine(model=model, **kwargs)
     raise Exception(
         f"Unsupported model: {model}, currently supported models: \
-                    gpt-4-vision-preview, gpt-4-turbo, gpt-4o, , gpt-4o-mini, gemini-1.5-pro-latest, llava"
+            {', '.join(supported_model_list)}"
     )
 
 
@@ -386,3 +402,90 @@ class OpenaiEngine_MindAct(Engine):
                 + self.request_interval
             )
         return [choice["message"]["content"] for choice in response["choices"]]
+
+
+class VLLMEngine(Engine):
+    def __init__(self, model_type: str, modality: str = "image", **kwargs) -> None:
+        """
+        Init a vLLM engine
+        :param model_path: Path to the model weights/repo
+        """
+        super().__init__(**kwargs)
+        assert model_type in model_example_map.keys()
+        llm, prompt, stop_token_ids = model_example_map[model_type](modality)
+        self.llm = llm  # Initialize vLLM engine
+        self.prompt = prompt
+
+        self.default_sampling_params = {
+            "max_tokens": 4096,
+            "temperature": 0.7,
+            "stop_token_ids": stop_token_ids,
+        }
+
+    def generate(
+        self,
+        prompt: list = None,
+        max_new_tokens=4096,
+        temperature=None,
+        image_path=None,
+        ouput_0=None,
+        turn_number=0,
+        **kwargs,
+    ):
+        self.current_key_idx = (self.current_key_idx + 1) % len(self.time_slots)
+        start_time = time.time()
+        if (
+            self.request_interval > 0
+            and start_time < self.next_avil_time[self.current_key_idx]
+        ):
+            time.sleep(self.next_avil_time[self.current_key_idx] - start_time)
+        prompt0, prompt1, prompt2 = prompt
+        # litellm.set_verbose=True
+
+        from PIL import Image
+        image_data = Image.open(image_path).convert("RGB")
+        
+        if turn_number == 0:
+            # Assume one turn dialogue
+            intputs = {
+               "prompt": self.prompt.format(question=f"System: {prompt0}\n User: {prompt1}"),   # vllm engine (note: some of the models do not support `system prompt`)
+                "multi_modal_data": {
+                    self.modality: image_data,
+                }, 
+            }
+        elif turn_number == 1:
+            intputs = {
+               "prompt": self.prompt.format(question=f"System: {prompt0}\n User: {prompt1}"),   # vllm engine (note: some of the models do not support `system prompt`)
+                "multi_modal_data": {
+                    self.modality: image_data,
+                }, 
+            }
+            prompt_input = [
+                {"role": "system", "content": [{"type": "text", "text": prompt0}]},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt1},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": f"\n\n{ouput_0}"}],
+                },
+                {"role": "user", "content": [{"type": "text", "text": prompt2}]},
+            ]
+        response = litellm.completion(
+            model=model if model else self.model,
+            messages=prompt_input,
+            max_tokens=max_new_tokens if max_new_tokens else 4096,
+            temperature=temperature if temperature else self.temperature,
+            **kwargs,
+        )
+        return [choice["message"]["content"] for choice in response.choices][0]

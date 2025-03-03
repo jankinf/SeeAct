@@ -43,21 +43,6 @@ def run_aria(modality: str, disable_mm_preprocessor_cache: bool = False):
     return llm, prompt, stop_token_ids
 
 
-# BLIP-2
-def run_blip2(modality: str, disable_mm_preprocessor_cache: bool = False):
-    assert modality == "image"
-
-    # BLIP-2 prompt format is inaccurate on HuggingFace model repository.
-    # See https://huggingface.co/Salesforce/blip2-opt-2.7b/discussions/15#64ff02f3f8cf9e4f5b038262 #noqa
-    prompt = "Question: {question} Answer:"
-    llm = LLM(
-        model="Salesforce/blip2-opt-2.7b",
-        disable_mm_preprocessor_cache=disable_mm_preprocessor_cache,
-    )
-    stop_token_ids = None
-    return llm, prompt, stop_token_ids
-
-
 # Chameleon
 def run_chameleon(modality: str, disable_mm_preprocessor_cache: bool = False):
     assert modality == "image"
@@ -76,6 +61,7 @@ def run_chameleon(modality: str, disable_mm_preprocessor_cache: bool = False):
 # Deepseek-VL2
 def run_deepseek_vl2(modality: str, disable_mm_preprocessor_cache: bool = False):
     # refer to: https://huggingface.co/deepseek-ai/deepseek-vl2/discussions/3
+    # system prompt not supported
     assert modality == "image"
 
     # model_name = "deepseek-ai/deepseek-vl2-tiny"
@@ -93,38 +79,6 @@ def run_deepseek_vl2(modality: str, disable_mm_preprocessor_cache: bool = False)
     stop_token_ids = None
     return llm, prompt, stop_token_ids
 
-
-# Florence2
-def run_florence2(modality: str, disable_mm_preprocessor_cache: bool = False):
-    assert modality == "image"
-
-    llm = LLM(
-        model="microsoft/Florence-2-large",
-        tokenizer="facebook/bart-large",
-        max_num_seqs=8,
-        trust_remote_code=True,
-        dtype="bfloat16",
-        disable_mm_preprocessor_cache=disable_mm_preprocessor_cache,
-    )
-
-    prompt = "<MORE_DETAILED_CAPTION>"
-    stop_token_ids = None
-    return llm, prompt, stop_token_ids
-
-
-# Fuyu
-def run_fuyu(modality: str, disable_mm_preprocessor_cache: bool = False):
-    assert modality == "image"
-
-    prompt = "{question}\n"
-    llm = LLM(
-        model="adept/fuyu-8b",
-        max_model_len=2048,
-        max_num_seqs=2,
-        disable_mm_preprocessor_cache=disable_mm_preprocessor_cache,
-    )
-    stop_token_ids = None
-    return llm, prompt, stop_token_ids
 
 
 # GLM-4v
@@ -447,34 +401,6 @@ def run_nvlm_d(modality: str, disable_mm_preprocessor_cache: bool = False):
     return llm, prompt, stop_token_ids
 
 
-# PaliGemma
-def run_paligemma(modality: str, disable_mm_preprocessor_cache: bool = False):
-    assert modality == "image"
-
-    # PaliGemma has special prompt format for VQA
-    prompt = "caption en"
-    llm = LLM(
-        model="google/paligemma-3b-mix-224",
-        disable_mm_preprocessor_cache=disable_mm_preprocessor_cache,
-    )
-    stop_token_ids = None
-    return llm, prompt, stop_token_ids
-
-
-# PaliGemma 2
-def run_paligemma2(modality: str, disable_mm_preprocessor_cache: bool = False):
-    assert modality == "image"
-
-    # PaliGemma 2 has special prompt format for VQA
-    prompt = "caption en"
-    llm = LLM(
-        model="google/paligemma2-3b-ft-docci-448",
-        disable_mm_preprocessor_cache=disable_mm_preprocessor_cache,
-    )
-    stop_token_ids = None
-    return llm, prompt, stop_token_ids
-
-
 # Phi-3-Vision
 def run_phi3v(modality: str, disable_mm_preprocessor_cache: bool = False):
     assert modality == "image"
@@ -524,23 +450,6 @@ def run_pixtral_hf(modality: str, disable_mm_preprocessor_cache: bool = False):
     stop_token_ids = None
     return llm, prompt, stop_token_ids
 
-
-# Qwen
-def run_qwen_vl(modality: str, disable_mm_preprocessor_cache: bool = False):
-    assert modality == "image"
-
-    llm = LLM(
-        model="Qwen/Qwen-VL",
-        trust_remote_code=True,
-        max_model_len=1024,
-        max_num_seqs=2,
-        hf_overrides={"architectures": ["QwenVLForConditionalGeneration"]},
-        disable_mm_preprocessor_cache=disable_mm_preprocessor_cache,
-    )
-
-    prompt = "{question}Picture 1: <img></img>\n"
-    stop_token_ids = None
-    return llm, prompt, stop_token_ids
 
 
 # Qwen2-VL
@@ -609,11 +518,8 @@ def run_qwen2_5_vl(modality: str, disable_mm_preprocessor_cache: bool = False):
 
 model_example_map = {
     "aria": run_aria,
-    "blip-2": run_blip2,
     "chameleon": run_chameleon,
     "deepseek_vl_v2": run_deepseek_vl2,
-    "florence2": run_florence2,
-    "fuyu": run_fuyu,
     "glm4v": run_glm4v,
     "h2ovl_chat": run_h2ovl,
     "idefics3": run_idefics3,
@@ -628,11 +534,8 @@ model_example_map = {
     "mllama": run_mllama,
     "molmo": run_molmo,
     "NVLM_D": run_nvlm_d,
-    "paligemma": run_paligemma,
-    "paligemma2": run_paligemma2,
     "phi3_v": run_phi3v,
     "pixtral_hf": run_pixtral_hf,
-    "qwen_vl": run_qwen_vl,
     "qwen2_vl": run_qwen2_vl,
     "qwen2_5_vl": run_qwen2_5_vl,
 }
