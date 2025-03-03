@@ -173,3 +173,5 @@ cython_debug/
 
 cookies/
 data/
+.env*
+run_fzw.sh
