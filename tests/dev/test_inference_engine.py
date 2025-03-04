@@ -52,15 +52,15 @@ def text_engine():
     print(output)
 
     # low level api
-    response = litellm.completion(
-        model=model,
-        messages=prompt,
-        max_tokens=50,
-        temperature=0,
-        api_key=os.getenv("OPENAI_API_KEY"),
-        api_base=os.getenv("OPENAI_API_BASE"),
-        custom_llm_provider="openai",
-    )
+    # response = litellm.completion(
+    #     model=model,
+    #     messages=prompt,
+    #     max_tokens=50,
+    #     temperature=0,
+    #     api_key=os.getenv("OPENAI_API_KEY"),
+    #     api_base=os.getenv("OPENAI_API_BASE"),
+    #     custom_llm_provider="openai",
+    # )
 
 
 def vision_text_engine():
