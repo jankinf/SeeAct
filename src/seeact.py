@@ -33,7 +33,10 @@ from aioconsole import ainput, aprint
 from playwright.async_api import async_playwright
 
 from data_utils.format_prompt_utils import get_index_from_option_name
-from data_utils.prompts import generate_prompt, format_options
+from data_utils.prompts import generate_prompt
+from data_utils.format_prompt_utils import (
+    format_options,
+)
 from demo_utils.browser_helper import (
     normal_launch_async,
     normal_new_context_async,
