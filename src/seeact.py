@@ -50,8 +50,7 @@ from demo_utils.format_prompt import (
     postprocess_action_lmm,
 )
 
-# from demo_utils.inference_engine import OpenaiEngine
-from demo_utils.inference_dev_engine import OpenaiEngine
+from demo_utils.inference_engine import OpenaiEngine
 from demo_utils.ranking_model import CrossEncoder, find_topk
 from demo_utils.website_dict import website_dict
 from dotenv import load_dotenv
@@ -127,249 +126,6 @@ async def page_on_open_handler(page):
     page.on("close", page_on_close_handler)
     page.on("crash", page_on_crash_handler)
     session_control.active_page = page
-
-
-async def perform_action(selector, target_action, target_value, target_element, logger):
-    try:
-        if target_action == "CLICK":
-            await handle_click(selector, target_element, logger)
-        elif target_action == "TYPE":
-            await handle_type(selector, target_value, target_element, logger)
-        elif target_action == "SELECT":
-            await handle_select(selector, target_value, target_element, logger)
-        elif target_action == "HOVER":
-            await handle_hover(selector, target_element, logger)
-        return True
-    except Exception as e:
-        logger.info(f"Failed to {target_action} because {e}")
-        return False
-
-
-async def handle_click(selector, target_element, logger):
-    js_click = True
-    try:
-        if target_element[-1] in ["select", "input"]:
-            logger.info("Try performing a CLICK")
-            await selector.evaluate("element => element.click()", timeout=10000)
-            js_click = False
-        else:
-            await selector.click(timeout=10000)
-    except Exception as e:
-        try:
-            if not js_click:
-                logger.info("Try performing a CLICK")
-                await selector.evaluate("element => element.click()", timeout=10000)
-            else:
-                raise Exception(e)
-        except Exception:
-            try:
-                logger.info("Try performing a HOVER")
-                await selector.hover(timeout=10000)
-                new_action = new_action.replace(
-                    "CLICK", f"Failed to CLICK because {e}, did a HOVER instead"
-                )
-            except Exception as eee:
-                new_action = new_action.replace("CLICK", f"Failed to CLICK because {e}")
-                raise Exception(eee)
-
-
-async def handle_type(selector, target_value, target_element, logger):
-    try:
-        try:
-            logger.info('Try performing a "press_sequentially"')
-            await selector.clear(timeout=10000)
-            await selector.fill("", timeout=10000)
-            await selector.press_sequentially(target_value, timeout=10000)
-        except Exception:
-            await selector.fill(target_value, timeout=10000)
-    except Exception as e:
-        try:
-            if target_element[-1] in ["select"]:
-                logger.info("Try performing a SELECT")
-                selected_value = await select_option(selector, target_value)
-                new_action = new_action.replace(
-                    "TYPE",
-                    f'Failed to TYPE "{target_value}" because {e}, did a SELECT {selected_value} instead',
-                )
-            else:
-                raise Exception(e)
-        except Exception:
-            js_click = True
-            try:
-                if target_element[-1] in ["select", "input"]:
-                    logger.info("Try performing a CLICK")
-                    await selector.evaluate("element => element.click()", timeout=10000)
-                    js_click = False
-                else:
-                    logger.info("Try performing a CLICK")
-                    await selector.click(timeout=10000)
-                new_action = "[" + target_element[2] + "]" + " "
-                new_action += (
-                    target_element[1]
-                    + " -> "
-                    + f'Failed to TYPE "{target_value}" because {e}, did a CLICK instead'
-                )
-            except Exception as eee:
-                try:
-                    if not js_click:
-                        logger.info("Try performing a CLICK")
-                        await selector.evaluate(
-                            "element => element.click()", timeout=10000
-                        )
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f'Failed to TYPE "{target_value}" because {e}, did a CLICK instead'
-                        )
-                    else:
-                        raise Exception(eee)
-                except Exception:
-                    try:
-                        logger.info("Try performing a HOVER")
-                        await selector.hover(timeout=10000)
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f'Failed to TYPE "{target_value}" because {e}, did a HOVER instead'
-                        )
-                    except Exception as eee:
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f'Failed to TYPE "{target_value}" because {e}'
-                        )
-                        raise Exception(eee)
-
-
-async def handle_select(selector, target_value, target_element, logger):
-    try:
-        logger.info("Try performing a SELECT")
-        selected_value = await select_option(selector, target_value)
-        new_action = new_action.replace(f"{target_value}", f"{selected_value}")
-    except Exception as e:
-        try:
-            if target_element[-1] in ["input"]:
-                try:
-                    logger.info('Try performing a "press_sequentially"')
-                    await selector.clear(timeout=10000)
-                    await selector.fill("", timeout=10000)
-                    await selector.press_sequentially(target_value, timeout=10000)
-                except Exception:
-                    await selector.fill(target_value, timeout=10000)
-                new_action = new_action.replace(
-                    "SELECT",
-                    f'Failed to SELECT "{target_value}" because {e}, did a TYPE instead',
-                )
-            else:
-                raise Exception(e)
-        except Exception:
-            js_click = True
-            try:
-                if target_element[-1] in ["select", "input"]:
-                    logger.info("Try performing a CLICK")
-                    await selector.evaluate("element => element.click()", timeout=10000)
-                    js_click = False
-                else:
-                    await selector.click(timeout=10000)
-                new_action = "[" + target_element[2] + "]" + " "
-                new_action += (
-                    target_element[1]
-                    + " -> "
-                    + f'Failed to SELECT "{target_value}" because {e}, did a CLICK instead'
-                )
-            except Exception as eee:
-                try:
-                    if not js_click:
-                        logger.info("Try performing a CLICK")
-                        await selector.evaluate(
-                            "element => element.click()", timeout=10000
-                        )
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f'Failed to SELECT "{target_value}" because {e}, did a CLICK instead'
-                        )
-                    else:
-                        raise Exception(eee)
-                except Exception:
-                    try:
-                        logger.info("Try performing a HOVER")
-                        await selector.hover(timeout=10000)
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f'Failed to SELECT "{target_value}" because {e}, did a HOVER instead'
-                        )
-                    except Exception as eee:
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f'Failed to SELECT "{target_value}" because {e}'
-                        )
-                        raise Exception(eee)
-
-
-async def handle_hover(selector, target_element, logger):
-    try:
-        logger.info("Try performing a HOVER")
-        await selector.hover(timeout=10000)
-    except Exception as e:
-        try:
-            await selector.click(timeout=10000)
-            new_action = new_action.replace(
-                "HOVER", f"Failed to HOVER because {e}, did a CLICK instead"
-            )
-        except Exception:
-            js_click = True
-            try:
-                if target_element[-1] in ["select", "input"]:
-                    logger.info("Try performing a CLICK")
-                    await selector.evaluate("element => element.click()", timeout=10000)
-                    js_click = False
-                else:
-                    await selector.click(timeout=10000)
-                new_action = "[" + target_element[2] + "]" + " "
-                new_action += (
-                    target_element[1]
-                    + " -> "
-                    + f"Failed to HOVER because {e}, did a CLICK instead"
-                )
-            except Exception as eee:
-                try:
-                    if not js_click:
-                        logger.info("Try performing a CLICK")
-                        await selector.evaluate(
-                            "element => element.click()", timeout=10000
-                        )
-                        new_action = "[" + target_element[2] + "]" + " "
-                        new_action += (
-                            target_element[1]
-                            + " -> "
-                            + f"Failed to HOVER because {e}, did a CLICK instead"
-                        )
-                    else:
-                        raise Exception(eee)
-                except Exception:
-                    new_action = "[" + target_element[2] + "]" + " "
-                    new_action += (
-                        target_element[1] + " -> " + f"Failed to HOVER because {e}"
-                    )
-                    raise Exception(eee)
-
-
-async def handle_press_enter(selector, logger):
-    try:
-        logger.info("Try performing a PRESS ENTER")
-        await selector.press("Enter")
-    except Exception:
-        await selector.click(timeout=10000)
-        await session_control.active_page.keyboard.press("Enter")
 
 
 async def main(config, base_dir) -> None:
@@ -1091,18 +847,328 @@ async def main(config, base_dir) -> None:
 
                         if selector:
                             valid_op_count += 1
-                            if target_action == "PRESS ENTER":
-                                await handle_press_enter(selector)
-                            else:
-                                action_success = await perform_action(
-                                    selector,
-                                    target_action,
-                                    target_value,
-                                    target_element,
-                                    logger,
-                                )
-                                if not action_success:
-                                    no_op_count += 1
+                            if target_action == "CLICK":
+                                js_click = True
+                                try:
+                                    if target_element[-1] in ["select", "input"]:
+                                        logger.info("Try performing a CLICK")
+                                        await selector.evaluate(
+                                            "element => element.click()", timeout=10000
+                                        )
+                                        js_click = False
+                                    else:
+                                        await selector.click(timeout=10000)
+                                except Exception as e:
+                                    try:
+                                        if not js_click:
+                                            logger.info("Try performing a CLICK")
+                                            await selector.evaluate(
+                                                "element => element.click()",
+                                                timeout=10000,
+                                            )
+                                        else:
+                                            raise Exception(e)
+                                    except Exception:
+                                        try:
+                                            logger.info("Try performing a HOVER")
+                                            await selector.hover(timeout=10000)
+                                            new_action = new_action.replace(
+                                                "CLICK",
+                                                f"Failed to CLICK because {e}, did a HOVER instead",
+                                            )
+                                        except Exception:
+                                            new_action = new_action.replace(
+                                                "CLICK", f"Failed to CLICK because {e}"
+                                            )
+                                            no_op_count += 1
+                            elif target_action == "TYPE":
+                                try:
+                                    try:
+                                        logger.info(
+                                            'Try performing a "press_sequentially"'
+                                        )
+                                        await selector.clear(timeout=10000)
+                                        await selector.fill("", timeout=10000)
+                                        await selector.press_sequentially(
+                                            target_value, timeout=10000
+                                        )
+                                    except Exception:
+                                        await selector.fill(target_value, timeout=10000)
+                                except Exception as e:
+                                    try:
+                                        if target_element[-1] in ["select"]:
+                                            logger.info("Try performing a SELECT")
+                                            selected_value = await select_option(
+                                                selector, target_value
+                                            )
+                                            new_action = new_action.replace(
+                                                "TYPE",
+                                                f'Failed to TYPE "{target_value}" because {e}, did a SELECT {selected_value} instead',
+                                            )
+                                        else:
+                                            raise Exception(e)
+                                    except Exception:
+                                        js_click = True
+                                        try:
+                                            if target_element[-1] in [
+                                                "select",
+                                                "input",
+                                            ]:
+                                                logger.info("Try performing a CLICK")
+                                                await selector.evaluate(
+                                                    "element => element.click()",
+                                                    timeout=10000,
+                                                )
+                                                js_click = False
+                                            else:
+                                                logger.info("Try performing a CLICK")
+                                                await selector.click(timeout=10000)
+                                            new_action = (
+                                                "[" + target_element[2] + "]" + " "
+                                            )
+                                            new_action += (
+                                                target_element[1]
+                                                + " -> "
+                                                + f'Failed to TYPE "{target_value}" because {e}, did a CLICK instead'
+                                            )
+                                        except Exception as eee:
+                                            try:
+                                                if not js_click:
+                                                    if dev_mode:
+                                                        logger.info(eee)
+                                                    logger.info(
+                                                        "Try performing a CLICK"
+                                                    )
+                                                    await selector.evaluate(
+                                                        "element => element.click()",
+                                                        timeout=10000,
+                                                    )
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f'Failed to TYPE "{target_value}" because {e}, did a CLICK instead'
+                                                    )
+                                                else:
+                                                    raise Exception(eee)
+                                            except Exception:
+                                                try:
+                                                    logger.info(
+                                                        "Try performing a HOVER"
+                                                    )
+                                                    await selector.hover(timeout=10000)
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f'Failed to TYPE "{target_value}" because {e}, did a HOVER instead'
+                                                    )
+                                                except Exception as eee:
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f'Failed to TYPE "{target_value}" because {e}'
+                                                    )
+                                                    no_op_count += 1
+                            elif target_action == "SELECT":
+                                try:
+                                    logger.info("Try performing a SELECT")
+                                    selected_value = await select_option(
+                                        selector, target_value
+                                    )
+                                    new_action = new_action.replace(
+                                        f"{target_value}", f"{selected_value}"
+                                    )
+                                except Exception as e:
+                                    try:
+                                        if target_element[-1] in ["input"]:
+                                            try:
+                                                logger.info(
+                                                    'Try performing a "press_sequentially"'
+                                                )
+                                                await selector.clear(timeout=10000)
+                                                await selector.fill("", timeout=10000)
+                                                await selector.press_sequentially(
+                                                    target_value, timeout=10000
+                                                )
+                                            except Exception:
+                                                await selector.fill(
+                                                    target_value, timeout=10000
+                                                )
+                                            new_action = new_action.replace(
+                                                "SELECT",
+                                                f'Failed to SELECT "{target_value}" because {e}, did a TYPE instead',
+                                            )
+                                        else:
+                                            raise Exception(e)
+                                    except Exception:
+                                        js_click = True
+                                        try:
+                                            if target_element[-1] in [
+                                                "select",
+                                                "input",
+                                            ]:
+                                                logger.info("Try performing a CLICK")
+                                                await selector.evaluate(
+                                                    "element => element.click()",
+                                                    timeout=10000,
+                                                )
+                                                js_click = False
+                                            else:
+                                                await selector.click(timeout=10000)
+                                            new_action = (
+                                                "[" + target_element[2] + "]" + " "
+                                            )
+                                            new_action += (
+                                                target_element[1]
+                                                + " -> "
+                                                + f'Failed to SELECT "{target_value}" because {e}, did a CLICK instead'
+                                            )
+                                        except Exception as eee:
+                                            try:
+                                                if not js_click:
+                                                    logger.info(
+                                                        "Try performing a CLICK"
+                                                    )
+                                                    await selector.evaluate(
+                                                        "element => element.click()",
+                                                        timeout=10000,
+                                                    )
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f'Failed to SELECT "{target_value}" because {e}, did a CLICK instead'
+                                                    )
+                                                else:
+                                                    raise Exception(eee)
+                                            except Exception:
+                                                try:
+                                                    logger.info(
+                                                        "Try performing a HOVER"
+                                                    )
+                                                    await selector.hover(timeout=10000)
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f'Failed to SELECT "{target_value}" because {e}, did a HOVER instead'
+                                                    )
+                                                except Exception as eee:
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f'Failed to SELECT "{target_value}" because {e}'
+                                                    )
+                                                    no_op_count += 1
+                            elif target_action == "HOVER":
+                                try:
+                                    logger.info("Try performing a HOVER")
+                                    await selector.hover(timeout=10000)
+                                except Exception as e:
+                                    try:
+                                        await selector.click(timeout=10000)
+                                        new_action = new_action.replace(
+                                            "HOVER",
+                                            f"Failed to HOVER because {e}, did a CLICK instead",
+                                        )
+                                    except:
+                                        js_click = True
+                                        try:
+                                            if target_element[-1] in [
+                                                "select",
+                                                "input",
+                                            ]:
+                                                logger.info("Try performing a CLICK")
+                                                await selector.evaluate(
+                                                    "element => element.click()",
+                                                    timeout=10000,
+                                                )
+                                                js_click = False
+                                            else:
+                                                await selector.click(timeout=10000)
+                                            new_action = (
+                                                "[" + target_element[2] + "]" + " "
+                                            )
+                                            new_action += (
+                                                target_element[1]
+                                                + " -> "
+                                                + f"Failed to HOVER because {e}, did a CLICK instead"
+                                            )
+                                        except Exception as eee:
+                                            try:
+                                                if not js_click:
+                                                    logger.info(
+                                                        "Try performing a CLICK"
+                                                    )
+                                                    await selector.evaluate(
+                                                        "element => element.click()",
+                                                        timeout=10000,
+                                                    )
+                                                    new_action = (
+                                                        "["
+                                                        + target_element[2]
+                                                        + "]"
+                                                        + " "
+                                                    )
+                                                    new_action += (
+                                                        target_element[1]
+                                                        + " -> "
+                                                        + f"Failed to HOVER because {e}, did a CLICK instead"
+                                                    )
+                                                else:
+                                                    raise Exception(eee)
+                                            except Exception:
+                                                new_action = (
+                                                    "[" + target_element[2] + "]" + " "
+                                                )
+                                                new_action += (
+                                                    target_element[1]
+                                                    + " -> "
+                                                    + f"Failed to HOVER because {e}"
+                                                )
+                                                no_op_count += 1
+                            elif target_action == "PRESS ENTER":
+                                try:
+                                    logger.info("Try performing a PRESS ENTER")
+                                    await selector.press("Enter")
+                                except Exception:
+                                    await selector.click(timeout=10000)
+                                    await session_control.active_page.keyboard.press(
+                                        "Enter"
+                                    )
                         elif monitor_signal == "pause":
                             logger.info(
                                 "Pause for human intervention. Press Enter to continue. You can also enter your message here, which will be included in the action history as a human message."
@@ -1123,9 +1189,18 @@ async def main(config, base_dir) -> None:
                             logger.info("Try performing a PRESS ENTER")
                             await session_control.active_page.keyboard.press("Enter")
                         no_op_count = 0
-                        await session_control.active_page.wait_for_load_state("load")
+                        try:
+                            await session_control.active_page.wait_for_load_state(
+                                "load"
+                            )
+                        except Exception:
+                            pass
                     except Exception as e:
-                        new_action = f"Failed to {target_action} {target_element_text if target_action not in ['TYPE', 'SELECT'] else target_value} because {e}"
+                        if target_action not in ["TYPE", "SELECT"]:
+                            new_action = f"Failed to {target_action} {target_element_text} because {e}"
+
+                        else:
+                            new_action = f"Failed to {target_action} {target_value} for {target_element_text} because {e}"
                         fail_to_execute = True
 
                     if new_action == "" or fail_to_execute:
