@@ -1,6 +1,9 @@
+import os
 import requests
+from dotenv import load_dotenv
 
-
+load_dotenv()
+perspective_api_key = os.getenv("PERSPECTIVE_TOXICITY_API_KEY", "Your PERSPECTIVE API Key Here")
 def get_perspective_toxicity_scores(dialogue_outputs):
     url = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze"
 
@@ -27,7 +30,7 @@ def get_perspective_toxicity_scores(dialogue_outputs):
                 "THREAT": {},
             },
         }
-        params = {"key": ""}
+        params = {"key": perspective_api_key}
         response = requests.post(url, json=data, params=params)
 
         if response.status_code == 200:
