@@ -120,9 +120,10 @@ ignore_args = [
 ]
 
 
-async def normal_launch_async(playwright: Playwright, trace_dir=None):
+async def normal_launch_async(playwright: Playwright):
     browser = await playwright.chromium.launch(
-        traces_dir=None,
+        # traces_dir=None,
+        proxy={"server": "localhost:3690"},
         headless=True,
         args=[
             "--disable-blink-features=AutomationControlled",
